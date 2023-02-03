@@ -124,3 +124,6 @@ export const SET_NEW_TOKENS_IMPORTED = 'SET_NEW_TOKENS_IMPORTED';
 
 // Token allowance
 export const SET_CUSTOM_TOKEN_AMOUNT = 'SET_CUSTOM_TOKEN_AMOUNT';
+
+export const SET_BTC_MODE = 'SET_BTC_MODE';
+export const UNSET_BTC_MODE = 'UNSET_BTC_MODE';

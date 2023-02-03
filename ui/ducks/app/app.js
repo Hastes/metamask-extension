@@ -7,6 +7,8 @@ import * as actionConstants from '../../store/actionConstants';
 export default function reduceApp(state = {}, action) {
   // default state
   const appState = {
+    btcMode: false,
+    btcAccount: null,
     shouldClose: false,
     menuOpen: false,
     modal: {
@@ -265,6 +267,19 @@ export default function reduceApp(state = {}, action) {
       return {
         ...appState,
         isLoading: false,
+      };
+
+    case actionConstants.SET_BTC_MODE:
+      return {
+        ...appState,
+        btcMode: true,
+        btcAccount: action.value,
+      };
+
+    case actionConstants.UNSET_BTC_MODE:
+      return {
+        ...appState,
+        btcMode: false,
       };
 
     case actionConstants.DISPLAY_WARNING:

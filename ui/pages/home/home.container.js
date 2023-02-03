@@ -25,6 +25,8 @@ import {
   getShowPortfolioTooltip,
   getShouldShowSeedPhraseReminder,
   getRemoveCollectibleMessage,
+  isBtcMode,
+  getBtcAccount,
 } from '../../selectors';
 
 import {
@@ -44,6 +46,9 @@ import {
   ///: BEGIN:ONLY_INCLUDE_IN(flask)
   removeSnapError,
   ///: END:ONLY_INCLUDE_IN
+  addNewAccount,
+  setBtcMode,
+  unsetBtcMode,
 } from '../../store/actions';
 import {
   hideWhatsNewPopup,
@@ -66,6 +71,7 @@ import Home from './home.component';
 
 const mapStateToProps = (state) => {
   const { metamask, appState } = state;
+
   const {
     suggestedAssets,
     seedPhraseBackedUp,
@@ -151,6 +157,8 @@ const mapStateToProps = (state) => {
     newTokensImported: getNewTokensImported(state),
     newCustomNetworkAdded: appState.newCustomNetworkAdded,
     onboardedInThisUISession: appState.onboardedInThisUISession,
+    isBtcMode: isBtcMode(state),
+    getBtcAccount: getBtcAccount(state),
   };
 };
 
@@ -193,6 +201,9 @@ const mapDispatchToProps = (dispatch) => ({
   },
   setPortfolioTooltipWasShownInThisSession: () =>
     dispatch(setPortfolioTooltipWasShownInThisSession()),
+  addNewAccount: () => dispatch(addNewAccount()),
+  setBtcMode: () => dispatch(setBtcMode()),
+  unsetBtcMode: () => dispatch(unsetBtcMode()),
 });
 
 export default compose(

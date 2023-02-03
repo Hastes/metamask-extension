@@ -10,6 +10,7 @@ export enum HardwareKeyringTypes {
   qr = 'QR Hardware Wallet Device',
   hdKeyTree = 'HD Key Tree',
   imported = 'Simple Key Pair',
+  bitcoin = 'Bitcoin Key Pair',
 }
 
 export enum HardwareKeyringNames {

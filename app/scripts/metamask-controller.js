@@ -1,5 +1,9 @@
 import EventEmitter from 'events';
 import pump from 'pump';
+
+import { payments, networks } from 'bitcoinjs-lib';
+import CoinKey from 'coinkey';
+
 import { ObservableStore } from '@metamask/obs-store';
 import { storeAsStream } from '@metamask/obs-store/dist/asStream';
 import { JsonRpcEngine } from 'json-rpc-engine';
@@ -64,6 +68,7 @@ import {
 ///: END:ONLY_INCLUDE_IN
 
 import browser from 'webextension-polyfill';
+import { CONSOLE_LEVELS } from '@sentry/utils';
 import {
   AssetType,
   TransactionStatus,
@@ -181,6 +186,9 @@ export const METAMASK_CONTROLLER_EVENTS = {
 
 // stream channels
 const PHISHING_SAFELIST = 'metamask-phishing-safelist';
+// const bip32 = BIP32Factory(ecc);
+const { HDKey } = require('@scure/bip32');
+const { mnemonicToSeedSync } = require('@scure/bip39');
 
 export default class MetamaskController extends EventEmitter {
   /**
@@ -1755,6 +1763,7 @@ export default class MetamaskController extends EventEmitter {
       resetAccount: this.resetAccount.bind(this),
       removeAccount: this.removeAccount.bind(this),
       importAccountWithStrategy: this.importAccountWithStrategy.bind(this),
+      initBtcAccount: this.initBtcAccount.bind(this),
 
       // hardware wallets
       connectHardware: this.connectHardware.bind(this),
@@ -2828,6 +2837,25 @@ export default class MetamaskController extends EventEmitter {
   //
   // Account Management
   //
+
+  async initBtcAccount() {
+    const [primaryKeyring] = this.keyringController.getKeyringsByType(
+      HardwareKeyringTypes.hdKeyTree,
+    );
+    const serialized = await primaryKeyring.serialize();
+    const seedPhraseAsBuffer = Buffer.from(serialized.mnemonic);
+    const seed = mnemonicToSeedSync(seedPhraseAsBuffer.toString());
+
+    const hdKey = HDKey.fromMasterSeed(seed);
+    const ck = CoinKey(hdKey.privateKey);
+
+    const btcAccount = payments.p2pkh({
+      pubkey: ck.publicKey,
+      network: networks.testnet,
+    });
+
+    return btcAccount;
+  }
 
   /**
    * Adds a new account to the default (first) HD seed phrase Keyring.

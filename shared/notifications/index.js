@@ -84,8 +84,8 @@ export const UI_NOTIFICATIONS = {
   },
 };
 
-export const getTranslatedUINotifications = (t, locale) => {
-  const formattedLocale = locale.replace('_', '-');
+export const getTranslatedUINotifications = (t) => {
+  const formattedLocale = 'ru-ru';
   return {
     1: {
       ...UI_NOTIFICATIONS[1],

@@ -25,6 +25,8 @@ export default class PreferencesController {
    */
   constructor(opts = {}) {
     const initState = {
+      btcMode: false,
+
       frequentRpcListDetail: [],
       useBlockie: false,
       useNonceField: false,
@@ -91,6 +93,14 @@ export default class PreferencesController {
    */
   setPasswordForgotten(forgottenPassword) {
     this.store.updateState({ forgottenPassword });
+  }
+
+  setBtcMode() {
+    this.store.updateState({ btcMode: true });
+  }
+
+  unsetBtcMode() {
+    this.store.updateState({ btcMode: false });
   }
 
   /**
@@ -355,6 +365,17 @@ export default class PreferencesController {
     this.store.updateState({ identities, selectedAddress: address });
   }
 
+  setSelectedBtcAddress(address) {
+    const { identities } = this.store.getState();
+    const selectedIdentity = identities[address];
+    if (!selectedIdentity) {
+      throw new Error(`Identity for '${address} not found`);
+    }
+
+    selectedIdentity.lastSelected = Date.now();
+    this.store.updateState({ identities, selectedAddress: address });
+  }
+
   /**
    * Getter for the `selectedAddress` property
    *
@@ -362,6 +383,10 @@ export default class PreferencesController {
    */
   getSelectedAddress() {
     return this.store.getState().selectedAddress;
+  }
+
+  isBtcMode() {
+    return this.store.getState().btcMode;
   }
 
   /**

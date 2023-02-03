@@ -89,6 +89,14 @@ export function isNetworkLoading(state) {
   return state.metamask.network === 'loading';
 }
 
+export function isBtcMode(state) {
+  return state.appState.btcMode;
+}
+
+export function getBtcAccount(state) {
+  return state.appState.btcAccount;
+}
+
 export function getNetworkIdentifier(state) {
   const {
     metamask: {

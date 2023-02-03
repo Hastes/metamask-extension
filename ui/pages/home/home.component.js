@@ -18,7 +18,8 @@ import Box from '../../components/ui/box';
 import ConnectedSites from '../connected-sites';
 import ConnectedAccounts from '../connected-accounts';
 import { Tabs, Tab } from '../../components/ui/tabs';
-import { EthOverview } from '../../components/app/wallet-overview';
+import { EthOverview, BtcOverview } from '../../components/app/wallet-overview';
+import SelectedAccount from '../../components/app/selected-account/selected-account.component';
 import WhatsNewPopup from '../../components/app/whats-new-popup';
 import RecoveryPhraseReminder from '../../components/app/recovery-phrase-reminder';
 import ActionableMessage from '../../components/ui/actionable-message/actionable-message';
@@ -60,6 +61,7 @@ import BetaHomeFooter from './beta/beta-home-footer.component';
 ///: END:ONLY_INCLUDE_IN
 ///: BEGIN:ONLY_INCLUDE_IN(flask)
 import FlaskHomeFooter from './flask/flask-home-footer.component';
+import WalletOverview from 'ui/components/app/wallet-overview/wallet-overview';
 ///: END:ONLY_INCLUDE_IN
 
 function shouldCloseNotificationPopup({
@@ -107,6 +109,8 @@ export default class Home extends PureComponent {
     disableWeb3ShimUsageAlert: PropTypes.func.isRequired,
     pendingConfirmations: PropTypes.arrayOf(PropTypes.object).isRequired,
     infuraBlocked: PropTypes.bool.isRequired,
+    isBtcMode: PropTypes.bool,
+    getBtcAccount: PropTypes.object,
     showWhatsNewPopup: PropTypes.bool.isRequired,
     hideWhatsNewPopup: PropTypes.func.isRequired,
     showPortfolioTooltip: PropTypes.bool.isRequired,
@@ -122,6 +126,8 @@ export default class Home extends PureComponent {
     showRecoveryPhraseReminder: PropTypes.bool.isRequired,
     setRecoveryPhraseReminderHasBeenShown: PropTypes.func.isRequired,
     setRecoveryPhraseReminderLastShown: PropTypes.func.isRequired,
+    setBtcMode: PropTypes.func.isRequired,
+    unsetBtcMode: PropTypes.func.isRequired,
     seedPhraseBackedUp: (props) => {
       if (
         props.seedPhraseBackedUp !== null &&
@@ -247,6 +253,15 @@ export default class Home extends PureComponent {
     } = this.props;
     setRecoveryPhraseReminderHasBeenShown(true);
     setRecoveryPhraseReminderLastShown(new Date().getTime());
+  };
+
+  toggleBtcMode = () => {
+    const { setBtcMode, unsetBtcMode, isBtcMode } = this.props;
+    if (isBtcMode) {
+      unsetBtcMode();
+    } else {
+      setBtcMode();
+    }
   };
 
   renderNotifications() {
@@ -595,6 +610,7 @@ export default class Home extends PureComponent {
       history,
       connectedStatusPopoverHasBeenShown,
       isPopup,
+      isBtcMode,
       announcementsToShow,
       showWhatsNewPopup,
       hideWhatsNewPopup,
@@ -608,6 +624,7 @@ export default class Home extends PureComponent {
       shouldShowSeedPhraseReminder,
       onboardedInThisUISession,
       newCustomNetworkAdded,
+      getBtcAccount,
     } = this.props;
 
     if (forgottenPassword) {
@@ -626,186 +643,221 @@ export default class Home extends PureComponent {
       Object.keys(newCustomNetworkAdded).length === 0;
     return (
       <div className="main-container">
-        <Route path={CONNECTED_ROUTE} component={ConnectedSites} exact />
-        <Route
-          path={CONNECTED_ACCOUNTS_ROUTE}
-          component={ConnectedAccounts}
-          exact
-        />
-        <div className="home__container">
-          {showWhatsNew ? <WhatsNewPopup onClose={hideWhatsNewPopup} /> : null}
-          {!showWhatsNew && showRecoveryPhraseReminder ? (
-            <RecoveryPhraseReminder
-              hasBackedUp={seedPhraseBackedUp}
-              onConfirm={this.onRecoveryPhraseReminderClose}
-            />
-          ) : null}
-          {isPopup && !connectedStatusPopoverHasBeenShown
-            ? this.renderPopover()
-            : null}
-          <div className="home__main-view">
-            <MenuBar />
-            <div className="home__balance-wrapper">
-              <EthOverview />
-            </div>
-            <Tabs
-              t={this.context.t}
-              defaultActiveTabKey={defaultHomeActiveTabName}
-              onTabClick={onTabClick}
-              tabsClassName="home__tabs"
-              subHeader={
-                <Tooltip
-                  position="bottom"
-                  open={
-                    !process.env.IN_TEST &&
-                    !shouldShowSeedPhraseReminder &&
-                    !showRecoveryPhraseReminder &&
-                    showPortfolioTooltip
-                  }
-                  interactive
-                  theme="home__subheader-link--tooltip"
-                  html={
-                    <div>
-                      <div className="home__subheader-link--tooltip-content-header">
-                        <div className="home__subheader-link--tooltip-content-header-text">
-                          {t('new')}
-                        </div>
-                        <button
-                          className="home__subheader-link--tooltip-content-header-button"
-                          onClick={() => {
-                            hidePortfolioTooltip();
-                          }}
-                        >
-                          <i className="fa fa-times" />
-                        </button>
-                      </div>
-                      <div>
-                        {t('tryOur')}&nbsp;
-                        <span className="home__subheader-link--tooltip-content-text-bold">
-                          {t('betaPortfolioSite')}
-                        </span>
-                        &nbsp;{t('keepTapsOnTokens')}
-                      </div>
-                    </div>
-                  }
-                >
-                  <ButtonLink
-                    className="home__subheader-link"
-                    data-testid="home__portfolio-site"
-                    onClick={async () => {
-                      const portfolioUrl = process.env.PORTFOLIO_URL;
-                      global.platform.openTab({
-                        url: `${portfolioUrl}?metamaskEntry=ext`,
-                      });
-                      this.context.trackEvent(
-                        {
-                          category: EVENT.CATEGORIES.HOME,
-                          event: EVENT_NAMES.PORTFOLIO_LINK_CLICKED,
-                          properties: {
-                            url: portfolioUrl,
-                          },
-                        },
-                        {
-                          contextPropsIntoEventProperties: [
-                            CONTEXT_PROPS.PAGE_TITLE,
-                          ],
-                        },
-                      );
-                    }}
-                    iconName={ICON_NAMES.DIAGRAM}
-                    width={BLOCK_SIZES.FULL}
-                    size={SIZES.MD}
-                    textProps={{ variant: TEXT.BODY_SM }}
-                  >
-                    {t('portfolioSite')}
-                  </ButtonLink>
-                </Tooltip>
-              }
-            >
-              <Tab
-                activeClassName="home__tab--active"
-                className="home__tab"
-                data-testid="home__asset-tab"
-                name={this.context.t('assets')}
-                tabKey="assets"
-              >
-                <AssetList
-                  onClickAsset={(asset) =>
-                    history.push(`${ASSET_ROUTE}/${asset}`)
-                  }
+        <Button
+          type="primary"
+          className="home__new-network-added__switch-to-button"
+          onClick={this.toggleBtcMode}
+        >
+          <Typography
+            variant={TYPOGRAPHY.H6}
+            fontWeight={FONT_WEIGHT.NORMAL}
+            color={COLORS.PRIMARY_INVERSE}
+          >
+            {isBtcMode ? 'Cancel BTC Mode' : 'Switch to BTC Mode'}
+          </Typography>
+        </Button>
+        {isBtcMode ? (
+          <div className="home__container">
+            <div className="home__main-view">
+              <div className="menu-bar">
+                <SelectedAccount
+                  selectedIdentity={{
+                    name: 'BTC Account',
+                    address: getBtcAccount.address,
+                  }}
                 />
-              </Tab>
-              {process.env.NFTS_V1 ? (
-                <Tab
-                  activeClassName="home__tab--active"
-                  className="home__tab"
-                  data-testid="home__nfts-tab"
-                  name={this.context.t('nfts')}
-                  tabKey="nfts"
-                >
-                  <CollectiblesTab
-                    onAddNFT={() => {
-                      history.push(ADD_COLLECTIBLE_ROUTE);
-                    }}
-                  />
-                </Tab>
-              ) : null}
-              <Tab
-                activeClassName="home__tab--active"
-                className="home__tab"
-                data-testid="home__activity-tab"
-                name={this.context.t('activity')}
-                tabKey="activity"
-              >
-                <TransactionList />
-              </Tab>
-            </Tabs>
-            <div className="home__support">
-              {
-                ///: BEGIN:ONLY_INCLUDE_IN(main)
-                t('needHelp', [
-                  <a
-                    href={SUPPORT_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key="need-help-link"
-                    onClick={() => {
-                      this.context.trackEvent(
-                        {
-                          category: EVENT.CATEGORIES.HOME,
-                          event: EVENT_NAMES.SUPPORT_LINK_CLICKED,
-                          properties: {
-                            url: SUPPORT_LINK,
-                          },
-                        },
-                        {
-                          contextPropsIntoEventProperties: [
-                            CONTEXT_PROPS.PAGE_TITLE,
-                          ],
-                        },
-                      );
-                    }}
-                  >
-                    {t('needHelpLinkText')}
-                  </a>,
-                ])
-                ///: END:ONLY_INCLUDE_IN
-              }
-              {
-                ///: BEGIN:ONLY_INCLUDE_IN(beta)
-                <BetaHomeFooter />
-                ///: END:ONLY_INCLUDE_IN
-              }
-              {
-                ///: BEGIN:ONLY_INCLUDE_IN(flask)
-                <FlaskHomeFooter />
-                ///: END:ONLY_INCLUDE_IN
-              }
+              </div>
+              <div className="home__balance-wrapper">
+                <BtcOverview />
+              </div>
             </div>
           </div>
+        ) : (
+          <div>
+            <Route path={CONNECTED_ROUTE} component={ConnectedSites} exact />
+            <Route
+              path={CONNECTED_ACCOUNTS_ROUTE}
+              component={ConnectedAccounts}
+              exact
+            />
+            <div className="home__container">
+              {showWhatsNew ? (
+                <WhatsNewPopup onClose={hideWhatsNewPopup} />
+              ) : null}
+              {!showWhatsNew && showRecoveryPhraseReminder ? (
+                <RecoveryPhraseReminder
+                  hasBackedUp={seedPhraseBackedUp}
+                  onConfirm={this.onRecoveryPhraseReminderClose}
+                />
+              ) : null}
+              {isPopup && !connectedStatusPopoverHasBeenShown
+                ? this.renderPopover()
+                : null}
+              <div className="home__main-view">
+                <MenuBar />
+                <div className="home__balance-wrapper">
+                  <EthOverview />
+                </div>
+                <Tabs
+                  t={this.context.t}
+                  defaultActiveTabKey={defaultHomeActiveTabName}
+                  onTabClick={onTabClick}
+                  tabsClassName="home__tabs"
+                  subHeader={
+                    <Tooltip
+                      position="bottom"
+                      open={
+                        !process.env.IN_TEST &&
+                        !shouldShowSeedPhraseReminder &&
+                        !showRecoveryPhraseReminder &&
+                        showPortfolioTooltip
+                      }
+                      interactive
+                      theme="home__subheader-link--tooltip"
+                      html={
+                        <div>
+                          <div className="home__subheader-link--tooltip-content-header">
+                            <div className="home__subheader-link--tooltip-content-header-text">
+                              {t('new')}
+                            </div>
+                            <button
+                              className="home__subheader-link--tooltip-content-header-button"
+                              onClick={() => {
+                                hidePortfolioTooltip();
+                              }}
+                            >
+                              <i className="fa fa-times" />
+                            </button>
+                          </div>
+                          <div>
+                            {t('tryOur')}&nbsp;
+                            <span className="home__subheader-link--tooltip-content-text-bold">
+                              {t('betaPortfolioSite')}
+                            </span>
+                            &nbsp;{t('keepTapsOnTokens')}
+                          </div>
+                        </div>
+                      }
+                    >
+                      <ButtonLink
+                        className="home__subheader-link"
+                        data-testid="home__portfolio-site"
+                        onClick={async () => {
+                          const portfolioUrl = process.env.PORTFOLIO_URL;
+                          global.platform.openTab({
+                            url: `${portfolioUrl}?metamaskEntry=ext`,
+                          });
+                          this.context.trackEvent(
+                            {
+                              category: EVENT.CATEGORIES.HOME,
+                              event: EVENT_NAMES.PORTFOLIO_LINK_CLICKED,
+                              properties: {
+                                url: portfolioUrl,
+                              },
+                            },
+                            {
+                              contextPropsIntoEventProperties: [
+                                CONTEXT_PROPS.PAGE_TITLE,
+                              ],
+                            },
+                          );
+                        }}
+                        iconName={ICON_NAMES.DIAGRAM}
+                        width={BLOCK_SIZES.FULL}
+                        size={SIZES.MD}
+                        textProps={{ variant: TEXT.BODY_SM }}
+                      >
+                        {t('portfolioSite')}
+                      </ButtonLink>
+                    </Tooltip>
+                  }
+                >
+                  <Tab
+                    activeClassName="home__tab--active"
+                    className="home__tab"
+                    data-testid="home__asset-tab"
+                    name={this.context.t('assets')}
+                    tabKey="assets"
+                  >
+                    <AssetList
+                      onClickAsset={(asset) =>
+                        history.push(`${ASSET_ROUTE}/${asset}`)
+                      }
+                    />
+                  </Tab>
+                  {process.env.NFTS_V1 ? (
+                    <Tab
+                      activeClassName="home__tab--active"
+                      className="home__tab"
+                      data-testid="home__nfts-tab"
+                      name={this.context.t('nfts')}
+                      tabKey="nfts"
+                    >
+                      <CollectiblesTab
+                        onAddNFT={() => {
+                          history.push(ADD_COLLECTIBLE_ROUTE);
+                        }}
+                      />
+                    </Tab>
+                  ) : null}
+                  <Tab
+                    activeClassName="home__tab--active"
+                    className="home__tab"
+                    data-testid="home__activity-tab"
+                    name={this.context.t('activity')}
+                    tabKey="activity"
+                  >
+                    <TransactionList />
+                  </Tab>
+                </Tabs>
+                <div className="home__support">
+                  {
+                    ///: BEGIN:ONLY_INCLUDE_IN(main)
+                    t('needHelp', [
+                      <a
+                        href={SUPPORT_LINK}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key="need-help-link"
+                        onClick={() => {
+                          this.context.trackEvent(
+                            {
+                              category: EVENT.CATEGORIES.HOME,
+                              event: EVENT_NAMES.SUPPORT_LINK_CLICKED,
+                              properties: {
+                                url: SUPPORT_LINK,
+                              },
+                            },
+                            {
+                              contextPropsIntoEventProperties: [
+                                CONTEXT_PROPS.PAGE_TITLE,
+                              ],
+                            },
+                          );
+                        }}
+                      >
+                        {t('needHelpLinkText')}
+                      </a>,
+                    ])
+                    ///: END:ONLY_INCLUDE_IN
+                  }
+                  {
+                    ///: BEGIN:ONLY_INCLUDE_IN(beta)
+                    <BetaHomeFooter />
+                    ///: END:ONLY_INCLUDE_IN
+                  }
+                  {
+                    ///: BEGIN:ONLY_INCLUDE_IN(flask)
+                    <FlaskHomeFooter />
+                    ///: END:ONLY_INCLUDE_IN
+                  }
+                </div>
+              </div>
 
-          {this.renderNotifications()}
-        </div>
+              {this.renderNotifications()}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

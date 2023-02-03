@@ -165,6 +165,8 @@ export const NETWORK_TYPES = {
   MAINNET: 'mainnet',
   RPC: 'rpc',
   SEPOLIA: 'sepolia',
+  // TRON: 'tron',
+  // BTC: 'btc',
 } as const;
 
 /**
@@ -212,6 +214,7 @@ export const CHAIN_IDS = {
   PALM: '0x2a15c308d',
   SEPOLIA: '0xaa36a7',
   AURORA: '0x4e454152',
+  TRON: '0x2494104990',
 } as const;
 
 /**
@@ -221,6 +224,8 @@ export const CHAIN_IDS = {
 export const MAX_SAFE_CHAIN_ID = 4503599627370476;
 
 export const MAINNET_DISPLAY_NAME = 'Ethereum Mainnet';
+export const TRON_DISPLAY_NAME = 'Tron Testnet';
+export const BTC_DISPLAY_NAME = 'BTC Testnet';
 export const GOERLI_DISPLAY_NAME = 'Goerli';
 export const SEPOLIA_DISPLAY_NAME = 'Sepolia';
 export const LOCALHOST_DISPLAY_NAME = 'Localhost 8545';
@@ -252,6 +257,8 @@ export const MAINNET_RPC_URL = getRpcUrl({
 });
 export const GOERLI_RPC_URL = getRpcUrl({ network: NETWORK_TYPES.GOERLI });
 export const SEPOLIA_RPC_URL = getRpcUrl({ network: NETWORK_TYPES.SEPOLIA });
+// export const BTC_RPC_URL = '';
+// export const TRON_RPC_URL = 'https://api.shasta.trongrid.io/jsonrpc';
 export const LOCALHOST_RPC_URL = 'http://localhost:8545';
 
 /**
@@ -474,6 +481,8 @@ export const BUILT_IN_NETWORKS = {
 
 export const NETWORK_TO_NAME_MAP = {
   [NETWORK_TYPES.MAINNET]: MAINNET_DISPLAY_NAME,
+  // [NETWORK_TYPES.TRON]: TRON_DISPLAY_NAME,
+  // [NETWORK_TYPES.BTC]: BTC_DISPLAY_NAME,
   [NETWORK_TYPES.GOERLI]: GOERLI_DISPLAY_NAME,
   [NETWORK_TYPES.SEPOLIA]: SEPOLIA_DISPLAY_NAME,
   [NETWORK_TYPES.LOCALHOST]: LOCALHOST_DISPLAY_NAME,

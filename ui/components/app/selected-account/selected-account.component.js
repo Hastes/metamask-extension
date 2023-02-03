@@ -36,7 +36,7 @@ class SelectedAccount extends Component {
   render() {
     const { t } = this.context;
     const { selectedIdentity } = this.props;
-    const checksummedAddress = toChecksumHexAddress(selectedIdentity.address);
+    const checksummedAddress = selectedIdentity.address;
 
     return (
       <div className="selected-account">

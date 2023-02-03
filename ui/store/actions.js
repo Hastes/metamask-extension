@@ -2358,6 +2358,32 @@ export function hideLoadingIndication() {
   };
 }
 
+export function setBtcMode() {
+  log.debug(`background.initBtcAccount`);
+  return async (dispatch) => {
+    // dispatch(showLoadingIndication());
+    try {
+      const btcAccount = await submitRequestToBackground('initBtcAccount');
+      dispatch({
+        type: actionConstants.SET_BTC_MODE,
+        value: btcAccount,
+      });
+    } catch (error) {
+      dispatch(displayWarning(error.message));
+      throw error;
+    } finally {
+      dispatch(hideLoadingIndication());
+    }
+    await forceUpdateMetamaskState(dispatch);
+  };
+}
+
+export function unsetBtcMode() {
+  return {
+    type: actionConstants.UNSET_BTC_MODE,
+  };
+}
+
 /**
  * An action creator for display a warning to the user in various places in the
  * UI. It will not be cleared until a new warning replaces it or `hideWarning`
