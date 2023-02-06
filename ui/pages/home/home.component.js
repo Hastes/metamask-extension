@@ -61,7 +61,6 @@ import BetaHomeFooter from './beta/beta-home-footer.component';
 ///: END:ONLY_INCLUDE_IN
 ///: BEGIN:ONLY_INCLUDE_IN(flask)
 import FlaskHomeFooter from './flask/flask-home-footer.component';
-import WalletOverview from 'ui/components/app/wallet-overview/wallet-overview';
 ///: END:ONLY_INCLUDE_IN
 
 function shouldCloseNotificationPopup({
@@ -128,6 +127,7 @@ export default class Home extends PureComponent {
     setRecoveryPhraseReminderLastShown: PropTypes.func.isRequired,
     setBtcMode: PropTypes.func.isRequired,
     unsetBtcMode: PropTypes.func.isRequired,
+    btcSend: PropTypes.func.isRequired,
     seedPhraseBackedUp: (props) => {
       if (
         props.seedPhraseBackedUp !== null &&
@@ -262,6 +262,10 @@ export default class Home extends PureComponent {
     } else {
       setBtcMode();
     }
+  };
+
+  btcSend = (address, amount) => {
+    return this.props.btcSend(address, amount);
   };
 
   renderNotifications() {
@@ -668,7 +672,7 @@ export default class Home extends PureComponent {
                 />
               </div>
               <div className="home__balance-wrapper">
-                <BtcOverview />
+                <BtcOverview btcSend={this.btcSend} />
               </div>
             </div>
           </div>

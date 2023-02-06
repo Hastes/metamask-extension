@@ -49,6 +49,7 @@ import {
   addNewAccount,
   setBtcMode,
   unsetBtcMode,
+  btcSend,
 } from '../../store/actions';
 import {
   hideWhatsNewPopup,
@@ -204,6 +205,7 @@ const mapDispatchToProps = (dispatch) => ({
   addNewAccount: () => dispatch(addNewAccount()),
   setBtcMode: () => dispatch(setBtcMode()),
   unsetBtcMode: () => dispatch(unsetBtcMode()),
+  btcSend: (address, amount) => dispatch(btcSend(address, amount)),
 });
 
 export default compose(

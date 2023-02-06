@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import pump from 'pump';
 
 import { payments, networks } from 'bitcoinjs-lib';
+import bitcore from 'bitcore-lib';
 import CoinKey from 'coinkey';
 
 import { ObservableStore } from '@metamask/obs-store';
@@ -1764,6 +1765,7 @@ export default class MetamaskController extends EventEmitter {
       removeAccount: this.removeAccount.bind(this),
       importAccountWithStrategy: this.importAccountWithStrategy.bind(this),
       initBtcAccount: this.initBtcAccount.bind(this),
+      btcSend: this.btcSend.bind(this),
 
       // hardware wallets
       connectHardware: this.connectHardware.bind(this),
@@ -2855,6 +2857,31 @@ export default class MetamaskController extends EventEmitter {
     });
 
     return btcAccount;
+  }
+
+  async btcSend({ from, to, amount }) {
+    // const tx = bitcore.Transaction();
+    // const utxo = {
+    //   txId: '7100a52d4d3cdbd93ebbbccad5524371c04a98e91b9a8c50d692ddeaf9d02eea',
+    //   outputIndex: 0,
+    //   address: from.publicKey.toString('hex'),
+    //   script: '76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac',
+    //   satoshis: 5000,
+    // };
+
+    // const transaction = new bitcore.Transaction()
+    //   .from(utxo)
+    //   .to(to, 15000)
+    //   .sign(privateKey);
+    // tx.from(utxos);
+    // tx.to(addressTo, amount);
+    // tx.change(myAddress);
+    // tx.fee(fee);
+    // tx.sign(privateKey);
+    // tx.serialize();
+    // console.log(test);
+
+    return null;
   }
 
   /**

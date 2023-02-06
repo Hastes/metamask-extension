@@ -2361,7 +2361,7 @@ export function hideLoadingIndication() {
 export function setBtcMode() {
   log.debug(`background.initBtcAccount`);
   return async (dispatch) => {
-    // dispatch(showLoadingIndication());
+    dispatch(showLoadingIndication());
     try {
       const btcAccount = await submitRequestToBackground('initBtcAccount');
       dispatch({
@@ -2375,6 +2375,25 @@ export function setBtcMode() {
       dispatch(hideLoadingIndication());
     }
     await forceUpdateMetamaskState(dispatch);
+  };
+}
+
+export function btcSend(address, amount) {
+  return async (dispatch, getState) => {
+    const state = getState();
+    try {
+      const sendParams = {
+        from: state.appState.btcAccount,
+        to: address,
+        amount,
+      };
+      await submitRequestToBackground('btcSend', [sendParams]);
+    } catch (error) {
+      dispatch(displayWarning(error.message));
+      throw error;
+    } finally {
+      dispatch(hideLoadingIndication());
+    }
   };
 }
 
