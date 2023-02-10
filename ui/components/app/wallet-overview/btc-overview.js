@@ -44,7 +44,8 @@ class BtcOverview extends Component {
   };
 
   handleAmountChange = (e) => {
-    this.setState({ amount: e.target.value });
+    const amount = e.target.value;
+    this.setState({ amount });
   };
 
   btcSend() {
@@ -52,7 +53,11 @@ class BtcOverview extends Component {
   }
 
   get btcAmount() {
-    return Number(this.props.getBtcAccount.info.address.balance);
+    const { info } = this.props.getBtcAccount;
+    if (info) {
+      return Number(info.address.balance);
+    }
+    return 0;
   }
 
   render() {
@@ -99,17 +104,13 @@ class BtcOverview extends Component {
               type="number"
               value={amount}
               onChange={(e) => this.handleAmountChange(e)}
+              error={
+                amount > this.btcAmount ? 'Not enough funds available' : null
+              }
               fullWidth
               autoComplete="off"
             />
           </Box>
-          {amount > this.btcAmount && (
-            <Box marginBottom={3}>
-              <Typography color={COLORS.ERROR_DEFAULT}>
-                Not enough funds available
-              </Typography>
-            </Box>
-          )}
         </div>
         <div>
           {amount <= this.btcAmount && !errorAddress && address ? (
