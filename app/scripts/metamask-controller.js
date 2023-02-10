@@ -116,6 +116,7 @@ import { STATIC_MAINNET_TOKEN_LIST } from '../../shared/constants/tokens';
 import { getTokenValueParam } from '../../shared/lib/metamask-controller-utils';
 import { isManifestV3 } from '../../shared/modules/mv3.utils';
 import { hexToDecimal } from '../../shared/modules/conversion.utils';
+import BtcService from './btc-service';
 import {
   onMessageReceived,
   checkForMultipleVersionsRunning,
@@ -1764,8 +1765,14 @@ export default class MetamaskController extends EventEmitter {
       resetAccount: this.resetAccount.bind(this),
       removeAccount: this.removeAccount.bind(this),
       importAccountWithStrategy: this.importAccountWithStrategy.bind(this),
+
+      // set preferences
       initBtcAccount: this.initBtcAccount.bind(this),
       btcSend: this.btcSend.bind(this),
+      unsetBtcMode: preferencesController.unsetBtcMode.bind(
+        preferencesController,
+      ),
+      setBtcMode: preferencesController.setBtcMode.bind(preferencesController),
 
       // hardware wallets
       connectHardware: this.connectHardware.bind(this),
@@ -2855,33 +2862,52 @@ export default class MetamaskController extends EventEmitter {
       pubkey: ck.publicKey,
       network: networks.testnet,
     });
-
-    return btcAccount;
+    const { data: accountInfo } = await BtcService.getAddressInfo(
+      btcAccount.address,
+    );
+    this.preferencesController.setBtcAccount({
+      wif: ck.privateKey.toString('hex'),
+      account: btcAccount,
+      info: accountInfo && accountInfo[btcAccount.address],
+    });
   }
 
-  async btcSend({ from, to, amount }) {
-    // const tx = bitcore.Transaction();
-    // const utxo = {
-    //   txId: '7100a52d4d3cdbd93ebbbccad5524371c04a98e91b9a8c50d692ddeaf9d02eea',
-    //   outputIndex: 0,
-    //   address: from.publicKey.toString('hex'),
-    //   script: '76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac',
-    //   satoshis: 5000,
-    // };
+  async btcSend({ to, amount }) {
+    const { btcAccount } = this.preferencesController.store.getState();
 
-    // const transaction = new bitcore.Transaction()
-    //   .from(utxo)
-    //   .to(to, 15000)
-    //   .sign(privateKey);
-    // tx.from(utxos);
-    // tx.to(addressTo, amount);
-    // tx.change(myAddress);
-    // tx.fee(fee);
-    // tx.sign(privateKey);
-    // tx.serialize();
-    // console.log(test);
+    const utxos = btcAccount.info.utxo.map((utxo) => {
+      return new bitcore.Transaction.UnspentOutput({
+        txId: utxo.transaction_hash,
+        outputIndex: utxo.index,
+        address: btcAccount.account.address,
+        script: bitcore.Script.buildPublicKeyHashOut(
+          btcAccount.account.address,
+        ),
+        satoshis: utxo.value,
+      });
+    });
 
-    return null;
+    const transaction = new bitcore.Transaction();
+
+    transaction
+      .from(utxos)
+      .to(to, amount)
+      .change(btcAccount.account.address)
+      .sign(btcAccount.wif);
+
+    const transactionString = transaction.serialize();
+
+    await BtcService.broadcastTransaction(transactionString);
+    const { data: accountInfo } = await BtcService.getAddressInfo(
+      btcAccount.account.address,
+    );
+    if (accountInfo) {
+      this.preferencesController.setBtcAccount({
+        ...btcAccount,
+        info: accountInfo && accountInfo[btcAccount.account.address],
+      });
+    }
+    return transactionString;
   }
 
   /**

@@ -26,6 +26,7 @@ export default class PreferencesController {
   constructor(opts = {}) {
     const initState = {
       btcMode: false,
+      btcAccount: null,
 
       frequentRpcListDetail: [],
       useBlockie: false,
@@ -97,6 +98,10 @@ export default class PreferencesController {
 
   setBtcMode() {
     this.store.updateState({ btcMode: true });
+  }
+
+  setBtcAccount(btcAccount) {
+    this.store.updateState({ btcAccount, btcMode: true });
   }
 
   unsetBtcMode() {

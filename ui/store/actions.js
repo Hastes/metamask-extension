@@ -2363,11 +2363,14 @@ export function setBtcMode() {
   return async (dispatch) => {
     dispatch(showLoadingIndication());
     try {
-      const btcAccount = await submitRequestToBackground('initBtcAccount');
-      dispatch({
-        type: actionConstants.SET_BTC_MODE,
-        value: btcAccount,
-      });
+      await submitRequestToBackground('initBtcAccount');
+      // Should i chache it ?
+      // const { btcAccount } = getState().metamask;
+      // if (btcAccount) {
+      //   await submitRequestToBackground('setBtcMode');
+      // } else {
+      //   await submitRequestToBackground('initBtcAccount');
+      // }
     } catch (error) {
       dispatch(displayWarning(error.message));
       throw error;
@@ -2380,10 +2383,11 @@ export function setBtcMode() {
 
 export function btcSend(address, amount) {
   return async (dispatch, getState) => {
+    dispatch(showLoadingIndication());
     const state = getState();
     try {
       const sendParams = {
-        from: state.appState.btcAccount,
+        btcAccount: state.appState.btcAccount,
         to: address,
         amount,
       };
@@ -2398,9 +2402,7 @@ export function btcSend(address, amount) {
 }
 
 export function unsetBtcMode() {
-  return {
-    type: actionConstants.UNSET_BTC_MODE,
-  };
+  return submitRequestToBackground('unsetBtcMode');
 }
 
 /**

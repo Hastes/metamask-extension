@@ -667,12 +667,15 @@ export default class Home extends PureComponent {
                 <SelectedAccount
                   selectedIdentity={{
                     name: 'BTC Account',
-                    address: getBtcAccount.address,
+                    address: getBtcAccount.account.address,
                   }}
                 />
               </div>
               <div className="home__balance-wrapper">
-                <BtcOverview btcSend={this.btcSend} />
+                <BtcOverview
+                  getBtcAccount={getBtcAccount}
+                  btcSend={this.btcSend}
+                />
               </div>
             </div>
           </div>

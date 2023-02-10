@@ -5,6 +5,9 @@ import classnames from 'classnames';
 import CurrencyDisplay from '../../ui/currency-display';
 import TextField from '../../ui/text-field';
 import Button from '../../ui/button';
+import Typography from '../../ui/typography';
+import Box from '../../ui/box';
+import { COLORS, TYPOGRAPHY } from '../../../helpers/constants/design-system';
 
 class BtcOverview extends Component {
   static propTypes = {
@@ -12,6 +15,7 @@ class BtcOverview extends Component {
     icon: PropTypes.element,
     loading: PropTypes.bool,
     btcSend: PropTypes.func,
+    getBtcAccount: PropTypes.object,
   };
 
   constructor(props) {
@@ -20,11 +24,12 @@ class BtcOverview extends Component {
   }
 
   state = {
-    address: '',
+    address: 'mohjSavDdQYHRYXcS3uS6ttaHP8amyvX78',
+    amount: 4000,
     errorAddress: null,
   };
 
-  handleChange = (e) => {
+  handleAddressChange = (e) => {
     const val = e.target.value;
     const addressIsValid = /^[a-km-zA-HJ-NP-Z1-9]{25,34}$/u.test(val);
     this.setState({ address: val });
@@ -38,12 +43,20 @@ class BtcOverview extends Component {
     // this.setSearchQuery(val);
   };
 
+  handleAmountChange = (e) => {
+    this.setState({ amount: e.target.value });
+  };
+
   btcSend() {
-    this.props.btcSend(this.state.address, 1);
+    this.props.btcSend(this.state.address, Number(this.state.amount));
+  }
+
+  get btcAmount() {
+    return Number(this.props.getBtcAccount.info.address.balance);
   }
 
   render() {
-    const { address, errorAddress } = this.state;
+    const { address, errorAddress, amount } = this.state;
 
     return (
       <div className={classnames('wallet-overview', this.props.className)}>
@@ -52,25 +65,54 @@ class BtcOverview extends Component {
           <div className="token-overview__balance">
             <CurrencyDisplay
               className="token-overview__primary-balance"
-              displayValue="0"
+              displayValue={String(this.btcAmount / 10 ** 9)}
               suffix="BTC"
             />
           </div>
         </div>
-        <div className="wallet-overview__buttons">
-          <TextField
-            placeholder="Input Token Address"
-            type="text"
-            value={address}
-            onChange={(e) => this.handleChange(e)}
-            error={errorAddress}
-            fullWidth
-            autoFocus
-            autoComplete="off"
-          />
+
+        <Typography
+          variant={TYPOGRAPHY.H7}
+          color={COLORS.TEXT_MUTED}
+          marginTop={4}
+          marginBottom={3}
+        >
+          Send your coins
+        </Typography>
+        <div>
+          <Box marginBottom={3}>
+            <TextField
+              placeholder="Input token Address"
+              type="text"
+              value={address}
+              onChange={(e) => this.handleAddressChange(e)}
+              error={errorAddress}
+              fullWidth
+              autoFocus
+              autoComplete="off"
+            />
+          </Box>
+
+          <Box marginBottom={3}>
+            <TextField
+              placeholder="Satoshi amount 100.000.000 = 1 BTC"
+              type="number"
+              value={amount}
+              onChange={(e) => this.handleAmountChange(e)}
+              fullWidth
+              autoComplete="off"
+            />
+          </Box>
+          {amount > this.btcAmount && (
+            <Box marginBottom={3}>
+              <Typography color={COLORS.ERROR_DEFAULT}>
+                Not enough funds available
+              </Typography>
+            </Box>
+          )}
         </div>
         <div>
-          {!errorAddress && address ? (
+          {amount <= this.btcAmount && !errorAddress && address ? (
             <Button
               onClick={() => {
                 this.btcSend();

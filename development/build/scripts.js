@@ -55,6 +55,7 @@ const {
 const scuttlingConfig = {
   'sentry-install.js': {
     // globals sentry need to function
+    monkey: 'aaaa',
     window: '',
     navigator: '',
     location: '',
@@ -854,7 +855,7 @@ function setupBundlerDefaults(
     envVars,
     ignoredFiles,
     policyOnly,
-    minify,
+    // minify,
     reloadOnChange,
     shouldLintFenceFiles,
     applyLavaMoat,
@@ -918,9 +919,9 @@ function setupBundlerDefaults(
   }
 
   if (!policyOnly) {
-    if (minify) {
-      setupMinification(buildConfiguration);
-    }
+    // if (minify) {
+    //   setupMinification(buildConfiguration);
+    // }
 
     // Setup source maps
     setupSourcemaps(buildConfiguration, { buildTarget });

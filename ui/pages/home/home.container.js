@@ -25,8 +25,7 @@ import {
   getShowPortfolioTooltip,
   getShouldShowSeedPhraseReminder,
   getRemoveCollectibleMessage,
-  isBtcMode,
-  getBtcAccount,
+  getPreferences,
 } from '../../selectors';
 
 import {
@@ -82,6 +81,8 @@ const mapStateToProps = (state) => {
     swapsState,
     firstTimeFlowType,
     completedOnboarding,
+    btcAccount,
+    btcMode,
   } = metamask;
   const { forgottenPassword } = appState;
   const totalUnapprovedCount = getTotalUnapprovedCount(state);
@@ -158,8 +159,8 @@ const mapStateToProps = (state) => {
     newTokensImported: getNewTokensImported(state),
     newCustomNetworkAdded: appState.newCustomNetworkAdded,
     onboardedInThisUISession: appState.onboardedInThisUISession,
-    isBtcMode: isBtcMode(state),
-    getBtcAccount: getBtcAccount(state),
+    isBtcMode: btcMode,
+    getBtcAccount: btcAccount,
   };
 };
 

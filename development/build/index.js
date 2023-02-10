@@ -78,6 +78,9 @@ async function defineAndRunBuildTasks() {
     scuttleGlobalThis: true,
     scuttleGlobalThisExceptions: [
       // globals used by different mm deps outside of lm compartment
+
+      'monkey',
+      'Buffer',
       'toString',
       'getComputedStyle',
       'addEventListener',
@@ -165,7 +168,6 @@ async function defineAndRunBuildTasks() {
   createTask(
     TASKS.DEV,
     composeSeries(
-      clean,
       styleTasks.dev,
       composeParallel(
         scriptTasks.dev,
@@ -180,7 +182,6 @@ async function defineAndRunBuildTasks() {
   createTask(
     TASKS.TEST_DEV,
     composeSeries(
-      clean,
       styleTasks.dev,
       composeParallel(
         scriptTasks.testDev,
