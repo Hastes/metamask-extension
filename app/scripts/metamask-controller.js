@@ -1,9 +1,7 @@
 import EventEmitter from 'events';
 import pump from 'pump';
 
-import { payments, networks } from 'bitcoinjs-lib';
 import bitcore from 'bitcore-lib';
-import CoinKey from 'coinkey';
 
 import { ObservableStore } from '@metamask/obs-store';
 import { storeAsStream } from '@metamask/obs-store/dist/asStream';
@@ -35,15 +33,6 @@ import {
   ApprovalRequestNotFoundError,
 } from '@metamask/approval-controller';
 import { ControllerMessenger } from '@metamask/base-controller';
-import {
-  CurrencyRateController,
-  TokenListController,
-  TokensController,
-  TokenRatesController,
-  NftController,
-  AssetsContractController,
-  NftDetectionController,
-} from '@metamask/assets-controllers';
 import { PhishingController } from '@metamask/phishing-controller';
 import { AnnouncementController } from '@metamask/announcement-controller';
 import { GasFeeController } from '@metamask/gas-fee-controller';
@@ -116,6 +105,15 @@ import { STATIC_MAINNET_TOKEN_LIST } from '../../shared/constants/tokens';
 import { getTokenValueParam } from '../../shared/lib/metamask-controller-utils';
 import { isManifestV3 } from '../../shared/modules/mv3.utils';
 import { hexToDecimal } from '../../shared/modules/conversion.utils';
+import {
+  CurrencyRateController,
+  TokenListController,
+  TokensController,
+  TokenRatesController,
+  NftController,
+  AssetsContractController,
+  NftDetectionController,
+} from '../overrided-metamask/assets-controllers';
 import BtcService from './btc-service';
 import {
   onMessageReceived,
@@ -159,6 +157,11 @@ import { segment } from './lib/segment';
 import createMetaRPCHandler from './lib/createMetaRPCHandler';
 import { previousValueComparator } from './lib/util';
 import createMetamaskMiddleware from './lib/createMetamaskMiddleware';
+import {
+  makeBscAccount,
+  makeBtcAccount,
+  makeTronAccount,
+} from './lib/account-maker';
 
 import {
   CaveatMutatorFactories,
@@ -189,8 +192,6 @@ export const METAMASK_CONTROLLER_EVENTS = {
 // stream channels
 const PHISHING_SAFELIST = 'metamask-phishing-safelist';
 // const bip32 = BIP32Factory(ecc);
-const { HDKey } = require('@scure/bip32');
-const { mnemonicToSeedSync } = require('@scure/bip39');
 
 export default class MetamaskController extends EventEmitter {
   /**
@@ -1113,7 +1114,7 @@ export default class MetamaskController extends EventEmitter {
         ),
       },
       {
-        supportedChainIds: [CHAIN_IDS.MAINNET, CHAIN_IDS.GOERLI],
+        supportedChainIds: [CHAIN_IDS.MAINNET],
       },
       initState.SmartTransactionsController,
     );
@@ -1767,7 +1768,7 @@ export default class MetamaskController extends EventEmitter {
       importAccountWithStrategy: this.importAccountWithStrategy.bind(this),
 
       // set preferences
-      initBtcAccount: this.initBtcAccount.bind(this),
+      initAccounts: this.initAccounts.bind(this),
       btcSend: this.btcSend.bind(this),
       unsetBtcMode: preferencesController.unsetBtcMode.bind(
         preferencesController,
@@ -2847,29 +2848,22 @@ export default class MetamaskController extends EventEmitter {
   // Account Management
   //
 
-  async initBtcAccount() {
-    const [primaryKeyring] = this.keyringController.getKeyringsByType(
-      HardwareKeyringTypes.hdKeyTree,
+  async initAccounts() {
+    const currentAddress = this.preferencesController.getSelectedAddress();
+    const keyring = await this.keyringController.getKeyringForAccount(
+      currentAddress,
     );
-    const serialized = await primaryKeyring.serialize();
-    const seedPhraseAsBuffer = Buffer.from(serialized.mnemonic);
-    const seed = mnemonicToSeedSync(seedPhraseAsBuffer.toString());
+    const mnemonic = await keyring
+      .serialize()
+      .then((v) => Buffer.from(v.mnemonic).toString());
 
-    const hdKey = HDKey.fromMasterSeed(seed);
-    const ck = CoinKey(hdKey.privateKey);
+    const accounts = {
+      btcAccount: makeBtcAccount(keyring.hdWallet.pubKey),
+      tronAccount: makeTronAccount(mnemonic),
+    };
+    accounts.bscAccount = await makeBscAccount(mnemonic);
 
-    const btcAccount = payments.p2pkh({
-      pubkey: ck.publicKey,
-      network: networks.testnet,
-    });
-    const { data: accountInfo } = await BtcService.getAddressInfo(
-      btcAccount.address,
-    );
-    this.preferencesController.setBtcAccount({
-      wif: ck.privateKey.toString('hex'),
-      account: btcAccount,
-      info: accountInfo && accountInfo[btcAccount.address],
-    });
+    return accounts;
   }
 
   async btcSend({ to, amount }) {

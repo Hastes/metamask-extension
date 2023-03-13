@@ -41,7 +41,7 @@ if (process.env.IN_TEST) {
     chainId: '0x539',
     nickname: 'Localhost 8545',
   };
-} else if (process.env.METAMASK_DEBUG || env === 'test') {
+} else if (false && process.env.METAMASK_DEBUG || env === 'test') {
   defaultProviderConfigOpts = {
     type: NETWORK_TYPES.GOERLI,
     chainId: CHAIN_IDS.GOERLI,

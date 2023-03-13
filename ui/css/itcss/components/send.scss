@@ -324,6 +324,11 @@
     margin-top: 10px;
     text-align: center;
   }
+  &__token-address {
+    @include H7;
+
+    color: var(--color-text-alternative);
+  }
 
   &__token-balance {
     @include H1;

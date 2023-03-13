@@ -8,7 +8,10 @@ import { useI18nContext } from '../../../hooks/useI18nContext';
 import { useTokenFiatAmount } from '../../../hooks/useTokenFiatAmount';
 
 export default function TokenCell({
-  address,
+  owner,
+  contract, // contract address
+  chainId,
+  image,
   decimals,
   balanceError,
   symbol,
@@ -19,7 +22,7 @@ export default function TokenCell({
   const userAddress = useSelector(getSelectedAddress);
   const t = useI18nContext();
 
-  const formattedFiat = useTokenFiatAmount(address, string, symbol);
+  const formattedFiat = useTokenFiatAmount(contract, string, symbol);
   const warning = balanceError ? (
     <span>
       {t('troubleTokenBalances')}
@@ -34,17 +37,18 @@ export default function TokenCell({
       </a>
     </span>
   ) : null;
-
   return (
     <AssetListItem
       className={classnames('token-cell', {
         'token-cell--outdated': Boolean(balanceError),
       })}
+      chainId={chainId}
       iconClassName="token-cell__icon"
-      onClick={onClick.bind(null, address)}
-      tokenAddress={address}
+      onClick={onClick.bind(null, owner)}
+      tokenAddress={owner}
       tokenSymbol={symbol}
       tokenDecimals={decimals}
+      tokenImage={image}
       warning={warning}
       primary={`${string || 0}`}
       secondary={formattedFiat}
@@ -54,7 +58,10 @@ export default function TokenCell({
 }
 
 TokenCell.propTypes = {
-  address: PropTypes.string,
+  chainId: PropTypes.string,
+  contract: PropTypes.string,
+  owner: PropTypes.string,
+  image: PropTypes.string,
   balanceError: PropTypes.object,
   symbol: PropTypes.string,
   decimals: PropTypes.number,
@@ -65,4 +72,6 @@ TokenCell.propTypes = {
 
 TokenCell.defaultProps = {
   balanceError: null,
+  contract: null,
+  image: null,
 };

@@ -378,6 +378,52 @@ export async function withNetworkClient(
 }
 
 /**
+ * Builds a provider from the middleware (for the provider type) along with a
+ * block tracker, runs the given function with those two things, and then
+ * ensures the block tracker is stopped at the end.
+ *
+ * @param {WithClientOptions} options - An options bag.
+ * @param {"infura" | "custom"} options.providerType - The type of network
+ * client being tested.
+ * @param {string} [options.infuraNetwork] - The name of the Infura network being
+ * tested, assuming that `providerType` is "infura" (default: "mainnet").
+ * @param {string} [options.customRpcUrl] - The URL of the custom RPC endpoint,
+ * assuming that `providerType` is "custom".
+ * @param {string} [options.customChainId] - The chain id belonging to the
+ * custom RPC endpoint, assuming that `providerType` is "custom" (default:
+ * "0x1").
+ * @returns {Promise<any>} The return provider.
+ */
+export function getProvider({
+  providerType,
+  infuraNetwork = 'mainnet',
+  customRpcUrl = MOCK_RPC_URL,
+  customChainId = '0x1',
+  infuraProjectId = MOCK_INFURA_PROJECT_ID,
+}) {
+  if (providerType !== 'infura' && providerType !== 'custom') {
+    throw new Error(
+      `providerType must be either "infura" or "custom", was "${providerType}" instead`,
+    );
+  }
+
+  delete process.env.IN_TEST;
+  const clientUnderTest =
+    providerType === 'infura'
+      ? createInfuraClient({
+          network: infuraNetwork,
+          projectId: infuraProjectId,
+        })
+      : createJsonRpcClient({ rpcUrl: customRpcUrl, chainId: customChainId });
+  const { networkMiddleware } = clientUnderTest;
+
+  const engine = new JsonRpcEngine();
+  engine.push(networkMiddleware);
+  const provider = providerFromEngine(engine);
+  return provider;
+}
+
+/**
  * Build mock parameters for a JSON-RPC call.
  *
  * The string 'some value' is used as the default value for each entry. The

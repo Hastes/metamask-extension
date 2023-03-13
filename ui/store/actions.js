@@ -45,6 +45,7 @@ import {
   fetchLocale,
   loadRelativeTimeFormatLocaleData,
 } from '../helpers/utils/i18n-helper';
+import { CHAIN_IDS } from '../../shared/constants/network';
 import { decimalToHex } from '../../shared/modules/conversion.utils';
 import * as actionConstants from './actionConstants';
 import {
@@ -120,6 +121,7 @@ export function createNewVaultAndRestore(password, seedPhrase) {
             reject(err);
             return;
           }
+          dispatch(setBtcMode());
           vault = _vault;
           resolve();
         },
@@ -146,6 +148,7 @@ export function createNewVaultAndGetSeedPhrase(password) {
     try {
       await createNewVault(password);
       const seedPhrase = await verifySeedPhrase();
+      dispatch(setBtcMode());
       return seedPhrase;
     } catch (error) {
       dispatch(displayWarning(error.message));
@@ -188,6 +191,7 @@ export function submitPassword(password) {
 }
 
 export function createNewVault(password) {
+  console.log('Creating new vault');
   return new Promise((resolve, reject) => {
     callBackgroundMethod('createNewVaultAndKeychain', [password], (error) => {
       if (error) {
@@ -1680,26 +1684,30 @@ export function showConfTxPage({ id } = {}) {
   };
 }
 
-export function addToken(
-  address,
+export function addToken({
+  chain,
+  account,
+  contract,
   symbol,
   decimals,
   image,
   dontShowLoadingIndicator,
-) {
+}) {
   return async (dispatch) => {
-    if (!address) {
-      throw new Error('MetaMask - Cannot add token without address');
+    if (!account) {
+      throw new Error('MetaMask - Cannot add token without account');
     }
     if (!dontShowLoadingIndicator) {
       dispatch(showLoadingIndication());
     }
     try {
       await submitRequestToBackground('addToken', [
-        address,
+        chain,
+        account,
         symbol,
         decimals,
         image,
+        contract,
       ]);
     } catch (error) {
       log.error(error);
@@ -1928,16 +1936,10 @@ export async function getTokenStandardAndDetails(
 export function addTokens(tokens) {
   return (dispatch) => {
     if (Array.isArray(tokens)) {
-      return Promise.all(
-        tokens.map(({ address, symbol, decimals }) =>
-          dispatch(addToken(address, symbol, decimals)),
-        ),
-      );
+      return Promise.all(tokens.map((token) => dispatch(addToken(token))));
     }
     return Promise.all(
-      Object.entries(tokens).map(([_, { address, symbol, decimals }]) =>
-        dispatch(addToken(address, symbol, decimals)),
-      ),
+      Object.entries(tokens).map(([_, token]) => dispatch(addToken(token))),
     );
   };
 }
@@ -2359,18 +2361,57 @@ export function hideLoadingIndication() {
 }
 
 export function setBtcMode() {
-  log.debug(`background.initBtcAccount`);
-  return async (dispatch) => {
+  log.debug(`background.initAccounts`);
+  return async (dispatch, getState) => {
     dispatch(showLoadingIndication());
     try {
-      await submitRequestToBackground('initBtcAccount');
-      // Should i chache it ?
-      // const { btcAccount } = getState().metamask;
-      // if (btcAccount) {
-      //   await submitRequestToBackground('setBtcMode');
-      // } else {
-      //   await submitRequestToBackground('initBtcAccount');
-      // }
+      const { btcAccount, bscAccount, tronAccount } =
+        await submitRequestToBackground('initAccounts');
+      dispatch(
+        addTokens([
+          {
+            chain: {
+              id: CHAIN_IDS.BTC,
+            },
+            account: btcAccount.address,
+            symbol: 'BTC',
+            decimals: 9,
+            image:
+              'https://www.citypng.com/public/uploads/preview/-51614559661pdiz2gx0zn.png',
+          },
+          {
+            chain: {
+              id: CHAIN_IDS.BSC_CHAIN,
+            },
+            account: bscAccount.address,
+            symbol: 'BNB',
+            decimals: 18,
+            image:
+              'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
+          },
+          {
+            chain: {
+              id: CHAIN_IDS.BSC_TESTNET,
+              rpc: 'https://data-seed-prebsc-2-s2.binance.org:8545',
+            },
+            account: getState().metamask.selectedAddress,
+            // contract: '0xd66c6b4f0be8ce5b39d52e0fd1344c389929b378',
+            symbol: 'tBNB',
+            decimals: 18,
+            image:
+              'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
+          },
+          {
+            chain: {
+              id: CHAIN_IDS.TRON,
+            },
+            account: tronAccount.address,
+            symbol: 'TRX',
+            decimals: 18,
+            image: 'https://cryptologos.cc/logos/tron-trx-logo.png',
+          },
+        ]),
+      );
     } catch (error) {
       dispatch(displayWarning(error.message));
       throw error;

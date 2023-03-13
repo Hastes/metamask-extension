@@ -12,6 +12,7 @@ import {
   getNativeCurrencyImage,
   getDetectedTokensInCurrentNetwork,
   getIstokenDetectionInactiveOnNonMainnetSupportedNetwork,
+  getSelectedAddress,
 } from '../../../selectors';
 import { getNativeCurrency } from '../../../ducks/metamask/metamask';
 import { useCurrencyDisplay } from '../../../hooks/useCurrencyDisplay';
@@ -34,6 +35,7 @@ const AssetList = ({ onClickAsset }) => {
 
   const [showDetectedTokens, setShowDetectedTokens] = useState(false);
 
+  const selectedAddress = useSelector(getSelectedAddress);
   const selectedAccountBalance = useSelector(getSelectedAccountCachedBalance);
   const nativeCurrency = useSelector(getNativeCurrency);
   const showFiat = useSelector(getShouldShowFiat);
@@ -78,6 +80,8 @@ const AssetList = ({ onClickAsset }) => {
         primary={
           primaryCurrencyProperties.value ?? secondaryCurrencyProperties.value
         }
+        chainId="0x1"
+        tokenAddress={selectedAddress}
         tokenSymbol={primaryCurrencyProperties.suffix}
         secondary={showFiat ? secondaryCurrencyDisplay : undefined}
         tokenImage={balanceIsLoading ? null : primaryTokenImage}

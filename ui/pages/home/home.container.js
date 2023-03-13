@@ -25,7 +25,6 @@ import {
   getShowPortfolioTooltip,
   getShouldShowSeedPhraseReminder,
   getRemoveCollectibleMessage,
-  getPreferences,
 } from '../../selectors';
 
 import {

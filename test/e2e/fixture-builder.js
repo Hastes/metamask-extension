@@ -291,7 +291,7 @@ function onboardingFixture() {
         recoveryPhraseReminderHasBeenShown: false,
         recoveryPhraseReminderLastShown:
           '__FIXTURE_SUBSTITUTION__currentDateInMilliseconds',
-        showPortfolioTooltip: true,
+        showPortfolioTooltip: false,
         showTestnetMessageInDropdown: true,
         trezorModel: null,
         usedNetworks: {

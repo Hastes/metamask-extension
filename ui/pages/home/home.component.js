@@ -126,7 +126,6 @@ export default class Home extends PureComponent {
     setRecoveryPhraseReminderHasBeenShown: PropTypes.func.isRequired,
     setRecoveryPhraseReminderLastShown: PropTypes.func.isRequired,
     setBtcMode: PropTypes.func.isRequired,
-    unsetBtcMode: PropTypes.func.isRequired,
     btcSend: PropTypes.func.isRequired,
     seedPhraseBackedUp: (props) => {
       if (
@@ -255,13 +254,9 @@ export default class Home extends PureComponent {
     setRecoveryPhraseReminderLastShown(new Date().getTime());
   };
 
-  toggleBtcMode = () => {
-    const { setBtcMode, unsetBtcMode, isBtcMode } = this.props;
-    if (isBtcMode) {
-      unsetBtcMode();
-    } else {
-      setBtcMode();
-    }
+  addBtcAccount = () => {
+    const { setBtcMode } = this.props;
+    setBtcMode();
   };
 
   btcSend = (address, amount) => {
@@ -650,17 +645,17 @@ export default class Home extends PureComponent {
         <Button
           type="primary"
           className="home__new-network-added__switch-to-button"
-          onClick={this.toggleBtcMode}
+          onClick={this.addBtcAccount}
         >
           <Typography
             variant={TYPOGRAPHY.H6}
             fontWeight={FONT_WEIGHT.NORMAL}
             color={COLORS.PRIMARY_INVERSE}
           >
-            {isBtcMode ? 'Cancel BTC Mode' : 'Switch to BTC Mode'}
+            Add BTC Account
           </Typography>
         </Button>
-        {isBtcMode ? (
+        {false ? (
           <div className="home__container">
             <div className="home__main-view">
               <div className="menu-bar">
@@ -703,81 +698,13 @@ export default class Home extends PureComponent {
               <div className="home__main-view">
                 <MenuBar />
                 <div className="home__balance-wrapper">
-                  <EthOverview />
+                  {/* <EthOverview /> */}
                 </div>
                 <Tabs
                   t={this.context.t}
                   defaultActiveTabKey={defaultHomeActiveTabName}
                   onTabClick={onTabClick}
                   tabsClassName="home__tabs"
-                  subHeader={
-                    <Tooltip
-                      position="bottom"
-                      open={
-                        !process.env.IN_TEST &&
-                        !shouldShowSeedPhraseReminder &&
-                        !showRecoveryPhraseReminder &&
-                        showPortfolioTooltip
-                      }
-                      interactive
-                      theme="home__subheader-link--tooltip"
-                      html={
-                        <div>
-                          <div className="home__subheader-link--tooltip-content-header">
-                            <div className="home__subheader-link--tooltip-content-header-text">
-                              {t('new')}
-                            </div>
-                            <button
-                              className="home__subheader-link--tooltip-content-header-button"
-                              onClick={() => {
-                                hidePortfolioTooltip();
-                              }}
-                            >
-                              <i className="fa fa-times" />
-                            </button>
-                          </div>
-                          <div>
-                            {t('tryOur')}&nbsp;
-                            <span className="home__subheader-link--tooltip-content-text-bold">
-                              {t('betaPortfolioSite')}
-                            </span>
-                            &nbsp;{t('keepTapsOnTokens')}
-                          </div>
-                        </div>
-                      }
-                    >
-                      <ButtonLink
-                        className="home__subheader-link"
-                        data-testid="home__portfolio-site"
-                        onClick={async () => {
-                          const portfolioUrl = process.env.PORTFOLIO_URL;
-                          global.platform.openTab({
-                            url: `${portfolioUrl}?metamaskEntry=ext`,
-                          });
-                          this.context.trackEvent(
-                            {
-                              category: EVENT.CATEGORIES.HOME,
-                              event: EVENT_NAMES.PORTFOLIO_LINK_CLICKED,
-                              properties: {
-                                url: portfolioUrl,
-                              },
-                            },
-                            {
-                              contextPropsIntoEventProperties: [
-                                CONTEXT_PROPS.PAGE_TITLE,
-                              ],
-                            },
-                          );
-                        }}
-                        iconName={ICON_NAMES.DIAGRAM}
-                        width={BLOCK_SIZES.FULL}
-                        size={SIZES.MD}
-                        textProps={{ variant: TEXT.BODY_SM }}
-                      >
-                        {t('portfolioSite')}
-                      </ButtonLink>
-                    </Tooltip>
-                  }
                 >
                   <Tab
                     activeClassName="home__tab--active"
@@ -817,7 +744,7 @@ export default class Home extends PureComponent {
                     <TransactionList />
                   </Tab>
                 </Tabs>
-                <div className="home__support">
+                {/* <div className="home__support">
                   {
                     ///: BEGIN:ONLY_INCLUDE_IN(main)
                     t('needHelp', [
@@ -858,7 +785,7 @@ export default class Home extends PureComponent {
                     <FlaskHomeFooter />
                     ///: END:ONLY_INCLUDE_IN
                   }
-                </div>
+                </div> */}
               </div>
 
               {this.renderNotifications()}

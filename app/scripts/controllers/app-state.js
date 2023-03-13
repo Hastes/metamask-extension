@@ -38,7 +38,7 @@ export default class AppStateController extends EventEmitter {
       recoveryPhraseReminderHasBeenShown: false,
       recoveryPhraseReminderLastShown: new Date().getTime(),
       showTestnetMessageInDropdown: true,
-      showPortfolioTooltip: true,
+      showPortfolioTooltip: false,
       showBetaHeader: isBeta(),
       trezorModel: null,
       ...initState,

@@ -1,6 +1,8 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import copyToClipboard from 'copy-to-clipboard';
+
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import Identicon from '../../ui/identicon';
@@ -14,8 +16,10 @@ import { SEND_ROUTE } from '../../../helpers/constants/routes';
 import { SEVERITIES } from '../../../helpers/constants/design-system';
 import { INVALID_ASSET_TYPE } from '../../../helpers/constants/error-keys';
 import { EVENT } from '../../../../shared/constants/metametrics';
+import { CHAIN_ALIASES } from '../../../../shared/constants/network';
 import { AssetType } from '../../../../shared/constants/transaction';
 import { MetaMetricsContext } from '../../../contexts/metametrics';
+import { shortenAddress } from '../../../helpers/utils/util';
 
 const AssetListItem = ({
   className,
@@ -31,6 +35,7 @@ const AssetListItem = ({
   secondary,
   identiconBorder,
   isERC721,
+  chainId,
 }) => {
   const t = useI18nContext();
   const dispatch = useDispatch();
@@ -103,6 +108,10 @@ const AssetListItem = ({
     t,
     dispatch,
   ]);
+  const clickRow = () => {
+    copyToClipboard(tokenAddress);
+    onClick();
+  };
 
   return (
     <ListItem
@@ -112,17 +121,27 @@ const AssetListItem = ({
         <button
           className="asset-list-item__token-button"
           data-testid="token-button"
-          onClick={onClick}
+          onClick={clickRow}
           title={`${primary} ${tokenSymbol}`}
         >
           <h2>
             <span className="asset-list-item__token-value">{primary}</span>
-            <span className="asset-list-item__token-symbol">{tokenSymbol}</span>
+            <span className="asset-list-item__token-symbol">
+              {tokenSymbol} ({chainId ? CHAIN_ALIASES[chainId] : chainId})
+            </span>
           </h2>
         </button>
       }
       titleIcon={titleIcon}
-      subtitle={secondary ? <h3 title={secondary}>{secondary}</h3> : null}
+      subtitle={
+        <div>
+          <div className="asset-list-item__token-address">
+            {shortenAddress(tokenAddress)}
+          </div>
+
+          {secondary ? <h3 title={secondary}>{secondary}</h3> : null}
+        </div>
+      }
       onClick={onClick}
       icon={
         <Identicon
@@ -135,20 +154,14 @@ const AssetListItem = ({
         />
       }
       midContent={midContent}
-      rightContent={
-        !isERC721 && (
-          <>
-            <i className="fas fa-chevron-right asset-list-item__chevron-right" />
-            {sendTokenButton}
-          </>
-        )
-      }
+      rightContent={!isERC721 && sendTokenButton}
     />
   );
 };
 
 AssetListItem.propTypes = {
   className: PropTypes.string,
+  chainId: PropTypes.string,
   'data-testid': PropTypes.string,
   iconClassName: PropTypes.string,
   onClick: PropTypes.func.isRequired,
@@ -164,6 +177,7 @@ AssetListItem.propTypes = {
 };
 
 AssetListItem.defaultProps = {
+  chainId: 'eth',
   className: undefined,
   'data-testid': undefined,
   iconClassName: undefined,

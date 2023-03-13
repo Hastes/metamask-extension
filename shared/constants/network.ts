@@ -203,6 +203,7 @@ export const CHAIN_IDS = {
   GOERLI: '0x5',
   LOCALHOST: '0x539',
   BSC: '0x38',
+  BSC_TESTNET: '0x61',
   OPTIMISM: '0xa',
   OPTIMISM_TESTNET: '0x1a4',
   POLYGON: '0x89',
@@ -215,6 +216,18 @@ export const CHAIN_IDS = {
   SEPOLIA: '0xaa36a7',
   AURORA: '0x4e454152',
   TRON: '0x2494104990',
+
+  // non-web3
+  BTC: 'bitcoin',
+  BSC_CHAIN: 'binance-chain',
+} as const;
+
+export const CHAIN_ALIASES = {
+  [CHAIN_IDS.MAINNET]: 'ERC-20',
+  [CHAIN_IDS.BSC_TESTNET]: 'BEB-20',
+  [CHAIN_IDS.BSC_CHAIN]: 'BEB-2',
+  [CHAIN_IDS.TRON]: 'TRC-20',
+  [CHAIN_IDS.BTC]: 'BITCOIN',
 } as const;
 
 /**
