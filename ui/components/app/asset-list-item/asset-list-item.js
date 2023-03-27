@@ -1,6 +1,8 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import copyToClipboard from 'copy-to-clipboard';
+
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import Identicon from '../../ui/identicon';
@@ -11,20 +13,23 @@ import Button from '../../ui/button';
 import { useI18nContext } from '../../../hooks/useI18nContext';
 import { startNewDraftTransaction } from '../../../ducks/send';
 import { SEND_ROUTE } from '../../../helpers/constants/routes';
-import { Color, SEVERITIES } from '../../../helpers/constants/design-system';
+import { SEVERITIES } from '../../../helpers/constants/design-system';
 import { INVALID_ASSET_TYPE } from '../../../helpers/constants/error-keys';
 import { EVENT } from '../../../../shared/constants/metametrics';
+import { CHAIN_ALIASES } from '../../../../shared/constants/network';
 import { AssetType } from '../../../../shared/constants/transaction';
 import { MetaMetricsContext } from '../../../contexts/metametrics';
-import { Icon, ICON_NAMES, ICON_SIZES } from '../../component-library';
-import Box from '../../ui/box/box';
+import { shortenAddress } from '../../../helpers/utils/util';
 
 const AssetListItem = ({
   className,
   'data-testid': dataTestId,
   iconClassName,
   onClick,
+  tokenProvider,
+  tokenBalance,
   tokenAddress,
+  tokenContract,
   tokenSymbol,
   tokenDecimals,
   tokenImage,
@@ -77,9 +82,12 @@ const AssetListItem = ({
           try {
             await dispatch(
               startNewDraftTransaction({
-                type: AssetType.token,
+                type: AssetType.native,
                 details: {
-                  address: tokenAddress,
+                  provider: tokenProvider,
+                  balance: tokenBalance,
+                  account: tokenAddress,
+                  contract: tokenContract,
                   decimals: tokenDecimals,
                   symbol: tokenSymbol,
                 },
@@ -97,6 +105,8 @@ const AssetListItem = ({
       </Button>
     );
   }, [
+    tokenContract,
+    tokenBalance,
     tokenSymbol,
     trackEvent,
     tokenAddress,
@@ -104,7 +114,12 @@ const AssetListItem = ({
     history,
     t,
     dispatch,
+    tokenProvider,
   ]);
+  const clickRow = () => {
+    copyToClipboard(tokenAddress);
+    onClick();
+  };
 
   return (
     <ListItem
@@ -114,17 +129,28 @@ const AssetListItem = ({
         <button
           className="asset-list-item__token-button"
           data-testid="token-button"
-          onClick={onClick}
+          onClick={clickRow}
           title={`${primary} ${tokenSymbol}`}
         >
           <h2>
             <span className="asset-list-item__token-value">{primary}</span>
             <span className="asset-list-item__token-symbol">{tokenSymbol}</span>
+            <span className="asset-list-item__token-type">
+              {tokenProvider && CHAIN_ALIASES[tokenProvider.chainId]}
+            </span>
           </h2>
         </button>
       }
       titleIcon={titleIcon}
-      subtitle={secondary ? <h3 title={secondary}>{secondary}</h3> : null}
+      subtitle={
+        <div>
+          <div className="asset-list-item__token-address">
+            {shortenAddress(tokenAddress)}
+          </div>
+
+          {secondary ? <h3 title={secondary}>{secondary}</h3> : null}
+        </div>
+      }
       onClick={onClick}
       icon={
         <Identicon
@@ -137,19 +163,7 @@ const AssetListItem = ({
         />
       }
       midContent={midContent}
-      rightContent={
-        !isERC721 && (
-          <Box>
-            <Icon
-              name={ICON_NAMES.ARROW_RIGHT}
-              color={Color.iconDefault}
-              size={ICON_SIZES.SM}
-              style={{ verticalAlign: 'middle' }}
-            />
-            {sendTokenButton}
-          </Box>
-        )
-      }
+      rightContent={!isERC721 && sendTokenButton}
     />
   );
 };
@@ -162,6 +176,9 @@ AssetListItem.propTypes = {
   tokenAddress: PropTypes.string,
   tokenSymbol: PropTypes.string,
   tokenDecimals: PropTypes.number,
+  tokenBalance: PropTypes.string,
+  tokenContract: PropTypes.string,
+  tokenProvider: PropTypes.object,
   tokenImage: PropTypes.string,
   warning: PropTypes.node,
   primary: PropTypes.string,
@@ -174,9 +191,10 @@ AssetListItem.defaultProps = {
   className: undefined,
   'data-testid': undefined,
   iconClassName: undefined,
-  tokenAddress: undefined,
   tokenImage: undefined,
   warning: undefined,
+  tokenContract: undefined,
+  tokenProvider: undefined,
 };
 
 export default AssetListItem;

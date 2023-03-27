@@ -57,22 +57,19 @@ export default function GasDisplay({ gasError }) {
 
   const { openBuyCryptoInPdapp } = useRamps();
 
-  const currentProvider = useSelector(getProvider);
-  const isMainnet = useSelector(getIsMainnet);
-  const isTestnet = useSelector(getIsTestnet);
+  // const isMainnet = useSelector(getIsMainnet);
+  // const isTestnet = useSelector(getIsTestnet);
   const isBuyableChain = useSelector(getIsBuyableChain);
   const draftTransaction = useSelector(getCurrentDraftTransaction);
   const useCurrencyRateCheck = useSelector(getUseCurrencyRateCheck);
   const { showFiatInTestnets, useNativeCurrencyAsPrimaryCurrency } =
     useSelector(getPreferences);
-  const { provider, unapprovedTxs } = useSelector((state) => state.metamask);
-  const nativeCurrency = useSelector(getNativeCurrency);
-  const { chainId } = provider;
-  const networkName = NETWORK_TO_NAME_MAP[chainId];
+  const { unapprovedTxs } = useSelector((state) => state.metamask);
+
   const isInsufficientTokenError =
     draftTransaction?.amount.error === INSUFFICIENT_TOKENS_ERROR;
+
   const editingTransaction = unapprovedTxs[draftTransaction.id];
-  const currentNetworkName = networkName || currentProvider.nickname;
 
   const transactionData = {
     txParams: {
@@ -91,6 +88,13 @@ export default function GasDisplay({ gasError }) {
     },
     userFeeLevel: editingTransaction?.userFeeLevel,
   };
+  const { details } = draftTransaction.asset;
+  // const chainId = details.chain.id;
+  const { provider } = details;
+  const currentNetworkName = NETWORK_TO_NAME_MAP[provider.chainId];
+  const nativeCurrency = details.symbol;
+  const isMainnet = details.provider.chainId === '0x1';
+  const isTestnet = false;
 
   const {
     hexMinimumTransactionFee,

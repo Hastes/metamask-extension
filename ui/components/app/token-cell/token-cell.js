@@ -8,10 +8,13 @@ import { useI18nContext } from '../../../hooks/useI18nContext';
 import { useTokenFiatAmount } from '../../../hooks/useTokenFiatAmount';
 
 export default function TokenCell({
-  address,
-  decimals,
-  balanceError,
+  owner,
+  contract, // contract address
+  provider,
   image,
+  decimals,
+  balance,
+  balanceError,
   symbol,
   string,
   onClick,
@@ -20,7 +23,7 @@ export default function TokenCell({
   const userAddress = useSelector(getSelectedAddress);
   const t = useI18nContext();
 
-  const formattedFiat = useTokenFiatAmount(address, string, symbol);
+  const formattedFiat = useTokenFiatAmount(contract, string, symbol);
   const warning = balanceError ? (
     <span>
       {t('troubleTokenBalances')}
@@ -35,15 +38,17 @@ export default function TokenCell({
       </a>
     </span>
   ) : null;
-
   return (
     <AssetListItem
       className={classnames('token-cell', {
         'token-cell--outdated': Boolean(balanceError),
       })}
       iconClassName="token-cell__icon"
-      onClick={onClick.bind(null, address)}
-      tokenAddress={address}
+      onClick={onClick.bind(null, owner)}
+      tokenProvider={provider}
+      tokenContract={contract}
+      tokenBalance={balance}
+      tokenAddress={owner}
       tokenSymbol={symbol}
       tokenDecimals={decimals}
       tokenImage={image}
@@ -56,16 +61,22 @@ export default function TokenCell({
 }
 
 TokenCell.propTypes = {
-  address: PropTypes.string,
+  provider: PropTypes.object,
+  contract: PropTypes.string,
+  owner: PropTypes.string,
+  image: PropTypes.string,
+  balance: PropTypes.string,
   balanceError: PropTypes.object,
   symbol: PropTypes.string,
   decimals: PropTypes.number,
   string: PropTypes.string,
   onClick: PropTypes.func.isRequired,
   isERC721: PropTypes.bool,
-  image: PropTypes.string,
 };
 
 TokenCell.defaultProps = {
   balanceError: null,
+  contract: null,
+  image: null,
+  provider: null,
 };

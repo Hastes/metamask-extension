@@ -24,16 +24,19 @@ function isBalanceSufficient({
   conversionRate = 1,
   gasTotal = '0x0',
   primaryCurrency,
+  decimals = 0,
 }) {
-  let totalAmount = new Numeric(amount, 16).add(new Numeric(gasTotal, 16));
+  let totalAmount = new Numeric(amount, 16)
+    .add(new Numeric(gasTotal, 16))
+    .shiftedBy(decimals);
   let balanceNumeric = new Numeric(balance, 16);
-
   if (typeof primaryCurrency !== 'undefined' && primaryCurrency !== null) {
     totalAmount = totalAmount.applyConversionRate(conversionRate);
     balanceNumeric = balanceNumeric.applyConversionRate(conversionRate);
   }
 
-  return balanceNumeric.greaterThanOrEqualTo(totalAmount);
+  const sufficient = balanceNumeric.greaterThanOrEqualTo(totalAmount);
+  return sufficient;
 }
 
 function isTokenBalanceSufficient({ amount = '0x0', tokenBalance, decimals }) {

@@ -12,7 +12,7 @@ import { updateSendAsset, getSendAsset } from '../../../../ducks/send';
 import SendAssetRow from './send-asset-row.component';
 
 function mapStateToProps(state) {
-  return {
+  const props = {
     tokens: state.metamask.tokens,
     selectedAddress: state.metamask.selectedAddress,
     nfts: getNfts(state),
@@ -22,6 +22,8 @@ function mapStateToProps(state) {
     nativeCurrency: getNativeCurrency(state),
     nativeCurrencyImage: getNativeCurrencyImage(state),
   };
+  // debugger;
+  return props;
 }
 
 function mapDispatchToProps(dispatch) {

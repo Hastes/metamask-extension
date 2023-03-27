@@ -140,6 +140,7 @@ export default class AppHeader extends PureComponent {
           <div className="app-header__contents">
             <MetaFoxLogo
               unsetIconHeight
+              src="./images/logo/desktop.svg"
               onClick={async () => {
                 if (onClick) {
                   await onClick();

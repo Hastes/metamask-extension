@@ -10,9 +10,11 @@ import { isEIP1559Transaction } from '../../../../../shared/modules/transaction.
 import { isValidHexAddress } from '../../../../../shared/modules/hexstring-utils';
 
 const normalizers = {
-  from: addHexPrefix,
-  to: (to, lowerCase) =>
-    lowerCase ? addHexPrefix(to).toLowerCase() : addHexPrefix(to),
+  // from: addHexPrefix,
+  from: (v) => v,
+  to: (v) => v,
+  // to: (to, lowerCase) =>
+  //   lowerCase ? addHexPrefix(to).toLowerCase() : addHexPrefix(to),
   nonce: addHexPrefix,
   value: addHexPrefix,
   data: addHexPrefix,
@@ -23,6 +25,7 @@ const normalizers = {
   type: addHexPrefix,
   estimateSuggested: (estimate) => estimate,
   estimateUsed: (estimate) => estimate,
+  assetDetails: (asset) => asset,
 };
 
 export function normalizeAndValidateTxParams(txParams, lowerCase = true) {
@@ -149,85 +152,85 @@ export function validateTxParams(txParams, eip1559Compatibility = true) {
     );
   }
 
-  Object.entries(txParams).forEach(([key, value]) => {
-    // validate types
-    switch (key) {
-      case 'from':
-        validateFrom(txParams);
-        break;
-      case 'to':
-        validateRecipient(txParams);
-        break;
-      case 'gasPrice':
-        ensureProperTransactionEnvelopeTypeProvided(txParams, 'gasPrice');
-        ensureMutuallyExclusiveFieldsNotProvided(
-          txParams,
-          'gasPrice',
-          'maxFeePerGas',
-        );
-        ensureMutuallyExclusiveFieldsNotProvided(
-          txParams,
-          'gasPrice',
-          'maxPriorityFeePerGas',
-        );
-        ensureFieldIsString(txParams, 'gasPrice');
-        break;
-      case 'maxFeePerGas':
-        ensureProperTransactionEnvelopeTypeProvided(txParams, 'maxFeePerGas');
-        ensureMutuallyExclusiveFieldsNotProvided(
-          txParams,
-          'maxFeePerGas',
-          'gasPrice',
-        );
-        ensureFieldIsString(txParams, 'maxFeePerGas');
-        break;
-      case 'maxPriorityFeePerGas':
-        ensureProperTransactionEnvelopeTypeProvided(
-          txParams,
-          'maxPriorityFeePerGas',
-        );
-        ensureMutuallyExclusiveFieldsNotProvided(
-          txParams,
-          'maxPriorityFeePerGas',
-          'gasPrice',
-        );
-        ensureFieldIsString(txParams, 'maxPriorityFeePerGas');
-        break;
-      case 'value':
-        ensureFieldIsString(txParams, 'value');
-        if (value.toString().includes('-')) {
-          throw ethErrors.rpc.invalidParams(
-            `Invalid transaction value "${value}": not a positive number.`,
-          );
-        }
+  // Object.entries(txParams).forEach(([key, value]) => {
+  //   // validate types
+  //   switch (key) {
+  //     case 'from':
+  //       validateFrom(txParams);
+  //       break;
+  //     case 'to':
+  //       validateRecipient(txParams);
+  //       break;
+  //     case 'gasPrice':
+  //       ensureProperTransactionEnvelopeTypeProvided(txParams, 'gasPrice');
+  //       ensureMutuallyExclusiveFieldsNotProvided(
+  //         txParams,
+  //         'gasPrice',
+  //         'maxFeePerGas',
+  //       );
+  //       ensureMutuallyExclusiveFieldsNotProvided(
+  //         txParams,
+  //         'gasPrice',
+  //         'maxPriorityFeePerGas',
+  //       );
+  //       ensureFieldIsString(txParams, 'gasPrice');
+  //       break;
+  //     case 'maxFeePerGas':
+  //       ensureProperTransactionEnvelopeTypeProvided(txParams, 'maxFeePerGas');
+  //       ensureMutuallyExclusiveFieldsNotProvided(
+  //         txParams,
+  //         'maxFeePerGas',
+  //         'gasPrice',
+  //       );
+  //       ensureFieldIsString(txParams, 'maxFeePerGas');
+  //       break;
+  //     case 'maxPriorityFeePerGas':
+  //       ensureProperTransactionEnvelopeTypeProvided(
+  //         txParams,
+  //         'maxPriorityFeePerGas',
+  //       );
+  //       ensureMutuallyExclusiveFieldsNotProvided(
+  //         txParams,
+  //         'maxPriorityFeePerGas',
+  //         'gasPrice',
+  //       );
+  //       ensureFieldIsString(txParams, 'maxPriorityFeePerGas');
+  //       break;
+  //     case 'value':
+  //       ensureFieldIsString(txParams, 'value');
+  //       if (value.toString().includes('-')) {
+  //         throw ethErrors.rpc.invalidParams(
+  //           `Invalid transaction value "${value}": not a positive number.`,
+  //         );
+  //       }
 
-        if (value.toString().includes('.')) {
-          throw ethErrors.rpc.invalidParams(
-            `Invalid transaction value of "${value}": number must be in wei.`,
-          );
-        }
+  //       if (value.toString().includes('.')) {
+  //         throw ethErrors.rpc.invalidParams(
+  //           `Invalid transaction value of "${value}": number must be in wei.`,
+  //         );
+  //       }
 
-        if (!value.match(/^0x[a-fA-F0-9]+$/u)) {
-          throw ethErrors.rpc.invalidParams(
-            `Invalid transaction value of "${value}": not a valid hex string.`,
-          );
-        }
-        break;
-      case 'chainId':
-        if (typeof value !== 'number' && typeof value !== 'string') {
-          throw ethErrors.rpc.invalidParams(
-            `Invalid transaction params: ${key} is not a Number or hex string. got: (${value})`,
-          );
-        }
-        break;
-      case 'data':
-        validateInputData(value);
-        ensureFieldIsString(txParams, 'data');
-        break;
-      default:
-        ensureFieldIsString(txParams, key);
-    }
-  });
+  //       if (!value.match(/^0x[a-fA-F0-9]+$/u)) {
+  //         throw ethErrors.rpc.invalidParams(
+  //           `Invalid transaction value of "${value}": not a valid hex string.`,
+  //         );
+  //       }
+  //       break;
+  //     case 'chainId':
+  //       if (typeof value !== 'number' && typeof value !== 'string') {
+  //         throw ethErrors.rpc.invalidParams(
+  //           `Invalid transaction params: ${key} is not a Number or hex string. got: (${value})`,
+  //         );
+  //       }
+  //       break;
+  //     case 'data':
+  //       validateInputData(value);
+  //       ensureFieldIsString(txParams, 'data');
+  //       break;
+  //     default:
+  //       ensureFieldIsString(txParams, key);
+  //   }
+  // });
 }
 
 /**

@@ -297,12 +297,13 @@ export function checkExistingAddresses(address, list = []) {
   if (!address) {
     return false;
   }
+  return true;
 
-  const matchesAddress = (obj) => {
-    return obj.address.toLowerCase() === address.toLowerCase();
-  };
+  // const matchesAddress = (obj) => {
+  //   return obj.address.toLowerCase() === address.toLowerCase();
+  // };
 
-  return list.some(matchesAddress);
+  // return list.some(matchesAddress);
 }
 
 export function bnGreaterThan(a, b) {

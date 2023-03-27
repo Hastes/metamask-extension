@@ -645,7 +645,7 @@ export default class Home extends PureComponent {
           <div className="home__main-view">
             <MenuBar />
             <div className="home__balance-wrapper">
-              <EthOverview />
+              {/* <EthOverview /> */}
             </div>
             <Tabs
               t={this.context.t}

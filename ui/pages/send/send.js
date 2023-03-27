@@ -8,6 +8,7 @@ import {
   getRecipient,
   getRecipientUserInput,
   getSendStage,
+  getSendAsset,
   resetRecipientInput,
   resetSendState,
   SEND_STAGES,
@@ -44,6 +45,7 @@ export default function SendTransactionScreen() {
   const draftTransactionExists = useSelector(getDraftTransactionExists);
   const location = useLocation();
   const trackEvent = useContext(MetaMetricsContext);
+  const sendAsset = useSelector(getSendAsset);
 
   const dispatch = useDispatch();
 
@@ -57,6 +59,8 @@ export default function SendTransactionScreen() {
    * screen. In the case where a draft transaction does not yet exist, this
    * hook is responsible for creating it. We will assume that this is a native
    * asset send.
+   *
+   * UPD_DEXTRADE: not possible
    */
   useEffect(() => {
     if (
@@ -113,6 +117,7 @@ export default function SendTransactionScreen() {
     <div className="page-container">
       <SendHeader history={history} />
       <DomainInput
+        sendAsset={sendAsset}
         userInput={userInput}
         className="send__to-row"
         onChange={(address) => dispatch(updateRecipientUserInput(address))}

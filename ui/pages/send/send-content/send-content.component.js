@@ -11,6 +11,7 @@ import {
 } from '../../../helpers/constants/error-keys';
 import { AssetType } from '../../../../shared/constants/transaction';
 import { CONTRACT_ADDRESS_LINK } from '../../../helpers/constants/common';
+import { NETWORK_TYPES } from '../../../../shared/constants/network';
 import GasDisplay from '../gas-display';
 import SendAmountRow from './send-amount-row';
 import SendHexDataRow from './send-hex-data-row';
@@ -69,6 +70,8 @@ export default class SendContent extends Component {
     const showKnownRecipientWarning =
       recipient.warning === 'knownAddressRecipient';
 
+    const isTrx20 = asset.details.provider.type === NETWORK_TYPES.TRON;
+
     return (
       <PageContainerContent>
         <div className="send-v2__form">
@@ -83,9 +86,9 @@ export default class SendContent extends Component {
             : null}
           <SendAssetRow />
           <SendAmountRow />
-          {networkOrAccountNotSupports1559 ? <SendGasRow /> : null}
+          {networkOrAccountNotSupports1559 && !isTrx20 ? <SendGasRow /> : null}
           {showHexData ? <SendHexDataRow /> : null}
-          <GasDisplay gasError={gasError} />
+          {isTrx20 ? null : <GasDisplay gasError={gasError} />}
         </div>
       </PageContainerContent>
     );

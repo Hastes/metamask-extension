@@ -38,6 +38,8 @@ import {
   getUnapprovedTransaction,
   getFullTxData,
   getUseCurrencyRateCheck,
+  getSelectedAccount,
+  getAddressBookEntryOrAccountName,
 } from '../../selectors';
 import { getMostRecentOverviewPage } from '../../ducks/history/history';
 import {
@@ -107,7 +109,6 @@ const mapStateToProps = (state, ownProps) => {
     nextNonce,
     allNftContracts,
     selectedAddress,
-    provider: { chainId },
   } = metamask;
   const { tokenData, txData, tokenProps, nonce } = confirmTransaction;
   const { txParams = {}, id: transactionId, type } = txData;
@@ -120,14 +121,16 @@ const mapStateToProps = (state, ownProps) => {
     gas: gasLimit,
     value: amount,
     data,
+    assetDetails,
   } = (transaction && transaction.txParams) || txParams;
-  const accounts = getMetaMaskAccounts(state);
 
   const transactionData = parseStandardTokenTransactionData(data);
   const tokenToAddress = getTokenAddressParam(transactionData);
+  const { address } = getSelectedAccount(state);
+  const fromName = getAddressBookEntryOrAccountName(state, address);
 
-  const { balance } = accounts[fromAddress];
-  const { name: fromName } = identities[fromAddress];
+  const { balance } = assetDetails;
+  const { chainId } = assetDetails.provider;
   let toAddress = txParamsToAddress;
   if (type !== TransactionType.simpleSend) {
     toAddress = propsToAddress || tokenToAddress || txParamsToAddress;
@@ -162,9 +165,9 @@ const mapStateToProps = (state, ownProps) => {
   } = transactionFeeSelector(state, transaction);
 
   const currentNetworkUnapprovedTxs = Object.keys(unapprovedTxs)
-    .filter((key) =>
-      transactionMatchesNetwork(unapprovedTxs[key], chainId, network),
-    )
+    // .filter((key) =>
+    //   transactionMatchesNetwork(unapprovedTxs[key], chainId, network),
+    // )
     .reduce((acc, key) => ({ ...acc, [key]: unapprovedTxs[key] }), {});
   const unapprovedTxCount = valuesFor(currentNetworkUnapprovedTxs).length;
 
@@ -198,7 +201,7 @@ const mapStateToProps = (state, ownProps) => {
     fullTxData.userFeeLevel === CUSTOM_GAS_ESTIMATE ||
     txParamsAreDappSuggested(fullTxData);
   const fromAddressIsLedger = isAddressLedger(state, fromAddress);
-  const nativeCurrency = getNativeCurrency(state);
+  const nativeCurrency = assetDetails.symbol;
 
   const hardwareWalletRequiresConnection =
     doesAddressRequireLedgerHidConnection(state, fromAddress);
@@ -257,6 +260,7 @@ const mapStateToProps = (state, ownProps) => {
     chainId,
     isBuyableChain,
     useCurrencyRateCheck: getUseCurrencyRateCheck(state),
+    assetDetails,
   };
 };
 

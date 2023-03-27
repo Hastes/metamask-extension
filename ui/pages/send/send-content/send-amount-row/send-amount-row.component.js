@@ -25,7 +25,7 @@ export default class SendAmountRow extends Component {
   renderInput() {
     const { amount, inError, asset } = this.props;
 
-    return asset.type === AssetType.token ? (
+    return [AssetType.native, AssetType.token].includes(asset.type) ? (
       <UserPreferencedTokenInput
         error={inError}
         onChange={this.handleChange}

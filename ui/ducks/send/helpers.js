@@ -173,14 +173,11 @@ export function generateTransactionParams(sendState) {
   const draftTransaction =
     sendState.draftTransactions[sendState.currentTransactionUUID];
   const txParams = {
-    // If the fromAccount has been specified we use that, if not we use the
-    // selected account.
-    from:
-      draftTransaction.fromAccount?.address ||
-      sendState.selectedAccount.address,
+    from: draftTransaction.asset.details.account,
     // gasLimit always needs to be set regardless of the asset being sent
     // or the type of transaction.
     gas: draftTransaction.gas.gasLimit,
+    assetDetails: draftTransaction.asset.details,
   };
   switch (draftTransaction.asset.type) {
     case AssetType.token:
@@ -188,7 +185,7 @@ export function generateTransactionParams(sendState) {
       // the token being sent. The value is set to '0x0' and the data
       // is generated from the recipient address, token being sent and
       // amount.
-      txParams.to = draftTransaction.asset.details.address;
+      txParams.to = draftTransaction.asset.details.contract;
       txParams.value = '0x0';
       txParams.data = generateERC20TransferData({
         toAddress: draftTransaction.recipient.address,

@@ -23,8 +23,11 @@ import { clearConfirmTransaction } from '../../ducks/confirm-transaction/confirm
 import { useAssetDetails } from '../../hooks/useAssetDetails';
 
 export default function ConfirmTokenTransactionSwitch({ transaction }) {
-  const { txParams: { data, to: tokenAddress, from: userAddress } = {} } =
-    transaction;
+  const {
+    txParams: { data, assetDetails, to: tokenAddress, from: userAddress } = {},
+  } = transaction;
+
+  const { provider } = assetDetails || {};
 
   const dispatch = useDispatch();
   const history = useHistory();
@@ -39,7 +42,7 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
     tokenAmount,
     tokenId,
     toAddress,
-  } = useAssetDetails(tokenAddress, userAddress, data);
+  } = useAssetDetails(tokenAddress, userAddress, data, provider.chainId);
 
   const {
     ethTransactionTotal,

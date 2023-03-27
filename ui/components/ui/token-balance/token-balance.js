@@ -10,8 +10,8 @@ export default function TokenBalance({ className, token }) {
   return (
     <CurrencyDisplay
       className={className}
-      displayValue={string || ''}
-      suffix={symbol || ''}
+      displayValue={string}
+      suffix={symbol}
     />
   );
 }

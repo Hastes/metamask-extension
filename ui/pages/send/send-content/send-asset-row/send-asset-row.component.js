@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import SendRowWrapper from '../send-row-wrapper';
 import Identicon from '../../../../components/ui/identicon';
 import TokenBalance from '../../../../components/ui/token-balance';
+import CurrencyDisplay from '../../../../components/ui/currency-display';
 import TokenListDisplay from '../../../../components/app/token-list-display';
 import UserPreferencedCurrencyDisplay from '../../../../components/app/user-preferenced-currency-display';
 import { PRIMARY } from '../../../../helpers/constants/common';
@@ -140,14 +141,14 @@ export default class SendAssetRow extends Component {
       nfts,
     } = this.props;
 
-    if (type === AssetType.token) {
-      const token = tokens.find(({ address }) =>
-        isEqualCaseInsensitive(address, details.address),
+    if (type === AssetType.token || type === AssetType.native) {
+      const token = tokens.find(
+        ({ account, provider }) =>
+          isEqualCaseInsensitive(account, details.account) &&
+          provider.chainId === details.provider.chainId,
       );
-      if (token) {
-        return this.renderToken(token);
-      }
-      return this.renderToken(details);
+      return this.renderNativeCurrency({ ...details, ...token });
+      // return this.renderToken(details);
     } else if (type === AssetType.NFT) {
       const nft = nfts.find(
         ({ address, tokenId }) =>
@@ -182,7 +183,7 @@ export default class SendAssetRow extends Component {
     );
   }
 
-  renderNativeCurrency(insideDropdown = false) {
+  renderNativeCurrency(token = {}) {
     const { t } = this.context;
     const { accounts, selectedAddress, nativeCurrency, nativeCurrencyImage } =
       this.props;
@@ -192,6 +193,14 @@ export default class SendAssetRow extends Component {
     const balanceValue = accounts[selectedAddress]
       ? accounts[selectedAddress].balance
       : '';
+
+    const selectedToken = {
+      image: token.image || nativeCurrencyImage,
+      symbol: token.symbol || nativeCurrency,
+      decimals: token.decimals || 18,
+    };
+
+    const isNativeCurrency = token.symbol === nativeCurrency;
 
     const sendableAssets = [...sendableTokens, ...sendableNfts];
     return (
@@ -206,25 +215,29 @@ export default class SendAssetRow extends Component {
         <div className="send-v2__asset-dropdown__asset-icon">
           <Identicon
             diameter={36}
-            image={nativeCurrencyImage}
-            address={nativeCurrency}
+            image={selectedToken.image}
+            address={selectedToken.symbol}
           />
         </div>
         <div className="send-v2__asset-dropdown__asset-data">
           <div className="send-v2__asset-dropdown__symbol">
-            {nativeCurrency}
+            {selectedToken.symbol}
           </div>
           <div className="send-v2__asset-dropdown__name">
             <span className="send-v2__asset-dropdown__name__label">
               {`${t('balance')}:`}
             </span>
-            <UserPreferencedCurrencyDisplay
-              value={balanceValue}
-              type={PRIMARY}
-            />
+            {isNativeCurrency ? (
+              <UserPreferencedCurrencyDisplay
+                value={balanceValue}
+                type={PRIMARY}
+              />
+            ) : (
+              <TokenBalance token={token} />
+            )}
           </div>
         </div>
-        {!insideDropdown && sendableAssets.length > 0 && (
+        {false && sendableAssets.length > 0 && (
           <i className="fa fa-caret-down fa-lg send-v2__asset-dropdown__caret" />
         )}
       </div>

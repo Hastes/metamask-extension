@@ -97,11 +97,11 @@ export const unconfirmedTransactionsHashSelector = createSelector(
       (acc, address) => {
         const transactions = { ...acc };
 
-        if (
-          transactionMatchesNetwork(unapprovedTxs[address], chainId, network)
-        ) {
+        // if (
+          // transactionMatchesNetwork(unapprovedTxs[address], chainId, network)
+        // ) {
           transactions[address] = unapprovedTxs[address];
-        }
+        // }
 
         return transactions;
       },

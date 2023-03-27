@@ -49,7 +49,10 @@ import {
 
 import { MIN_GAS_LIMIT_DEC } from '../send/send.constants';
 
-import { NETWORK_TO_NAME_MAP } from '../../../shared/constants/network';
+import {
+  NETWORK_TO_NAME_MAP,
+  CHAIN_IDS,
+} from '../../../shared/constants/network';
 import {
   addHexes,
   hexToDecimal,
@@ -66,6 +69,10 @@ export default class ConfirmTransactionBase extends Component {
   static contextTypes = {
     t: PropTypes.func,
     trackEvent: PropTypes.func,
+  };
+
+  static defaultProps = {
+    assetDetails: null,
   };
 
   static propTypes = {
@@ -146,6 +153,7 @@ export default class ConfirmTransactionBase extends Component {
     isApprovalOrRejection: PropTypes.bool,
     assetStandard: PropTypes.string,
     useCurrencyRateCheck: PropTypes.bool,
+    assetDetails: PropTypes.object,
   };
 
   state = {
@@ -835,13 +843,12 @@ export default class ConfirmTransactionBase extends Component {
   }
 
   renderTitleComponent() {
-    const { title, hexTransactionAmount, txData } = this.props;
+    const { title, hexTransactionAmount, txData, assetDetails } = this.props;
 
     // Title string passed in by props takes priority
     if (title) {
       return null;
     }
-
     const isContractInteraction =
       txData.type === TransactionType.contractInteraction;
 
@@ -849,8 +856,9 @@ export default class ConfirmTransactionBase extends Component {
       <UserPreferencedCurrencyDisplay
         value={hexTransactionAmount}
         type={PRIMARY}
-        showEthLogo
+        showEthLogo={assetDetails.chainId === CHAIN_IDS.MAINNET}
         ethLogoHeight={24}
+        numberOfDecimals={assetDetails.decimals}
         hideLabel={!isContractInteraction}
         showCurrencySuffix={isContractInteraction}
       />

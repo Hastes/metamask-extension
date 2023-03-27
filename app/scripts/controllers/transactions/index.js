@@ -9,6 +9,7 @@ import NonceTracker from 'nonce-tracker';
 import log from 'loglevel';
 import BigNumber from 'bignumber.js';
 import { merge, pickBy } from 'lodash';
+import { Transaction } from 'bitcoinjs-lib';
 import cleanErrorStack from '../../lib/cleanErrorStack';
 import {
   hexToBn,
@@ -58,6 +59,8 @@ import {
   TRANSACTION_ENVELOPE_TYPE_NAMES,
 } from '../../../../shared/lib/transactions-controller-utils';
 import { Numeric } from '../../../../shared/modules/Numeric';
+import { getProvider } from '../network/provider-api-tests/helpers';
+import { chainTron } from '../network/chain-provider';
 import TransactionStateManager from './tx-state-manager';
 import TxGasUtil from './tx-gas-utils';
 import PendingTransactionTracker from './pending-tx-tracker';
@@ -153,6 +156,7 @@ export default class TransactionController extends EventEmitter {
     this.getAccountType = opts.getAccountType;
     this.getTokenStandardAndDetails = opts.getTokenStandardAndDetails;
     this.securityProviderRequest = opts.securityProviderRequest;
+    this.keyringController = opts.keyringController;
 
     this.memStore = new ObservableStore({});
 
@@ -235,6 +239,16 @@ export default class TransactionController extends EventEmitter {
     return integerChainId;
   }
 
+  getCustomQuery(provider) {
+    const buildedProvider = getProvider({
+      providerType: 'custom',
+      customRpcUrl: provider.rpcUrl,
+      customChainId: provider.chainId,
+    });
+
+    return new EthQuery(buildedProvider);
+  }
+
   async getEIP1559Compatibility(fromAddress) {
     const currentNetworkIsCompatible =
       await this._getCurrentNetworkEIP1559Compatibility();
@@ -251,10 +265,16 @@ export default class TransactionController extends EventEmitter {
    * transaction type to use.
    *
    * @param fromAddress
+   * @param provider - provider config (optional)
    * @returns {Common} common configuration object
    */
-  async getCommonConfiguration(fromAddress) {
-    const { type, nickname: name } = this.getProviderConfig();
+  async getCommonConfiguration(fromAddress, provider) {
+    const {
+      type,
+      nickname: name,
+      chainId,
+    } = provider || this.getProviderConfig();
+
     const supportsEIP1559 = await this.getEIP1559Compatibility(fromAddress);
 
     // This logic below will have to be updated each time a hardfork happens
@@ -276,12 +296,11 @@ export default class TransactionController extends EventEmitter {
     // since we only support EVM compatible chains, and then override the
     // name, chainId and networkId properties. This is done using the
     // `forCustomChain` static method on the Common class.
-    const chainId = parseInt(this._getCurrentChainId(), 16);
-    const networkId = this.getNetworkState();
+    const networkId = parseInt(chainId, 10) || this.getNetworkState();
 
     const customChainParams = {
       name,
-      chainId,
+      chainId: parseInt(chainId, 16),
       // It is improbable for a transaction to be signed while the network
       // is loading for two reasons.
       // 1. Pending, unconfirmed transactions are wiped on network change
@@ -800,6 +819,9 @@ export default class TransactionController extends EventEmitter {
 
     txUtils.validateTxParams(normalizedTxParams, eip1559Compatibility);
 
+    const isTrx20 =
+      normalizedTxParams.assetDetails?.provider.type === NETWORK_TYPES.TRON;
+
     /**
      * `generateTxMeta` adds the default txMeta properties to the passed object.
      * These include the tx's `id`. As we use the id for determining order of
@@ -810,6 +832,8 @@ export default class TransactionController extends EventEmitter {
       txParams: normalizedTxParams,
       origin,
       sendFlowHistory,
+      chainId: normalizedTxParams.assetDetails?.provider.chainId,
+      isTrx20,
     });
 
     // Add actionId to txMeta to check if same actionId is seen again
@@ -818,51 +842,57 @@ export default class TransactionController extends EventEmitter {
       txMeta.actionId = actionId;
     }
 
-    if (origin === ORIGIN_METAMASK) {
-      // Assert the from address is the selected address
-      if (normalizedTxParams.from !== this.getSelectedAddress()) {
-        throw ethErrors.rpc.internal({
-          message: `Internally initiated transaction is using invalid account.`,
-          data: {
-            origin,
-            fromAddress: normalizedTxParams.from,
-            selectedAddress: this.getSelectedAddress(),
-          },
-        });
-      }
-    } else {
-      // Assert that the origin has permissions to initiate transactions from
-      // the specified address
-      const permittedAddresses = await this.getPermittedAccounts(origin);
-      if (!permittedAddresses.includes(normalizedTxParams.from)) {
-        throw ethErrors.provider.unauthorized({ data: { origin } });
-      }
-    }
-
-    const { type } = await determineTransactionType(
-      normalizedTxParams,
-      this.query,
-    );
-    txMeta.type = transactionType || type;
-
-    // ensure value
-    txMeta.txParams.value = txMeta.txParams.value
-      ? addHexPrefix(txMeta.txParams.value)
-      : '0x0';
-
-    if (txMethodType && this.securityProviderRequest) {
-      const securityProviderResponse = await this.securityProviderRequest(
-        txMeta,
-        txMethodType,
+    // if (origin === ORIGIN_METAMASK) {
+    //   // Assert the from address is the selected address
+    //   if (normalizedTxParams.from !== this.getSelectedAddress()) {
+    //     throw ethErrors.rpc.internal({
+    //       message: `Internally initiated transaction is using invalid account.`,
+    //       data: {
+    //         origin,
+    //         fromAddress: normalizedTxParams.from,
+    //         selectedAddress: this.getSelectedAddress(),
+    //       },
+    //     });
+    //   }
+    // } else {
+    //   // Assert that the origin has permissions to initiate transactions from
+    //   // the specified address
+    //   const permittedAddresses = await this.getPermittedAccounts(origin);
+    //   if (!permittedAddresses.includes(normalizedTxParams.from)) {
+    //     throw ethErrors.provider.unauthorized({ data: { origin } });
+    //   }
+    // }
+    txMeta.type = transactionType;
+    if (!isTrx20) {
+      const { type } = await determineTransactionType(
+        normalizedTxParams,
+        this.query,
       );
+      if (type) {
+        txMeta.type = type;
+      }
 
-      txMeta.securityProviderResponse = securityProviderResponse;
+      // ensure value
+      txMeta.txParams.value = txMeta.txParams.value
+        ? addHexPrefix(txMeta.txParams.value)
+        : '0x0';
+
+      if (txMethodType && this.securityProviderRequest) {
+        const securityProviderResponse = await this.securityProviderRequest(
+          txMeta,
+          txMethodType,
+        );
+
+        txMeta.securityProviderResponse = securityProviderResponse;
+      }
     }
 
     this.addTransaction(txMeta);
     this.emit('newUnapprovedTx', txMeta);
 
-    txMeta = await this.addTransactionGasDefaults(txMeta);
+    if (!isTrx20) {
+      txMeta = await this.addTransactionGasDefaults(txMeta);
+    }
 
     return txMeta;
   }
@@ -1337,50 +1367,82 @@ export default class TransactionController extends EventEmitter {
     // we need to keep track of what is currently being signed,
     // So that we do not increment nonce + resubmit something
     // that is already being incremented & signed.
+    // debugger;
     const txMeta = this.txStateManager.getTransaction(txId);
     if (this.inProcessOfSigning.has(txId)) {
       return;
     }
     this.inProcessOfSigning.add(txId);
     let nonceLock;
+    const assetDetails = txMeta.txParams.assetDetails || null;
+
     try {
       // approve
       this.txStateManager.setTxStatusApproved(txId);
       // get next nonce
       const fromAddress = txMeta.txParams.from;
+      const toAddress = txMeta.txParams.to;
       // wait for a nonce
       let { customNonceValue } = txMeta;
       customNonceValue = Number(customNonceValue);
-      nonceLock = await this.nonceTracker.getNonceLock(fromAddress);
-      // add nonce to txParams
-      // if txMeta has previousGasParams then it is a retry at same nonce with
-      // higher gas settings and therefor the nonce should not be recalculated
-      const nonce = txMeta.previousGasParams
-        ? txMeta.txParams.nonce
-        : nonceLock.nextNonce;
-      const customOrNonce =
-        customNonceValue === 0 ? customNonceValue : customNonceValue || nonce;
 
-      txMeta.txParams.nonce = addHexPrefix(customOrNonce.toString(16));
-      // add nonce debugging information to txMeta
-      txMeta.nonceDetails = nonceLock.nonceDetails;
-      if (customNonceValue) {
-        txMeta.nonceDetails.customNonceValue = customNonceValue;
+      if (txMeta.isTrx20) {
+        const currentAddress = this.getSelectedAddress();
+        const keyring = await this.keyringController.getKeyringForAccount(
+          currentAddress,
+        );
+
+        await chainTron.simpleSend(keyring, toAddress, txMeta.txParams.value);
+
+        this.txStateManager.setTxStatusSubmitted(txId);
+        this._trackTransactionMetricsEvent(
+          txMeta,
+          TransactionMetaMetricsEvent.submitted,
+          actionId,
+        );
+      } else {
+        if (assetDetails) {
+          const ethQuery = this.getCustomQuery(assetDetails.provider);
+          const nonce = await ethQuery.getTransactionCount(fromAddress);
+          txMeta.txParams.nonce = addHexPrefix(nonce.toString(16));
+        } else {
+          nonceLock = await this.nonceTracker.getNonceLock(fromAddress);
+          // add nonce to txParams
+          // if txMeta has previousGasParams then it is a retry at same nonce with
+          // higher gas settings and therefor the nonce should not be recalculated
+          const nonce = txMeta.previousGasParams
+            ? txMeta.txParams.nonce
+            : nonceLock.nextNonce;
+          const customOrNonce =
+            customNonceValue === 0
+              ? customNonceValue
+              : customNonceValue || nonce;
+
+          txMeta.txParams.nonce = addHexPrefix(customOrNonce.toString(16));
+          // add nonce debugging information to txMeta
+          txMeta.nonceDetails = nonceLock.nonceDetails;
+          if (customNonceValue) {
+            txMeta.nonceDetails.customNonceValue = customNonceValue;
+          }
+        }
+        this.txStateManager.updateTransaction(
+          txMeta,
+          'transactions#approveTransaction',
+        );
+        // sign transaction
+        // debugger;
+        const rawTx = await this.signTransaction(txId);
+        await this.publishTransaction(txId, rawTx, actionId);
+        this._trackTransactionMetricsEvent(
+          txMeta,
+          TransactionMetaMetricsEvent.approved,
+          actionId,
+        );
+        if (nonceLock) {
+          // must set transaction to submitted/failed before releasing lock
+          nonceLock.releaseLock();
+        }
       }
-      this.txStateManager.updateTransaction(
-        txMeta,
-        'transactions#approveTransaction',
-      );
-      // sign transaction
-      const rawTx = await this.signTransaction(txId);
-      await this.publishTransaction(txId, rawTx, actionId);
-      this._trackTransactionMetricsEvent(
-        txMeta,
-        TransactionMetaMetricsEvent.approved,
-        actionId,
-      );
-      // must set transaction to submitted/failed before releasing lock
-      nonceLock.releaseLock();
     } catch (err) {
       // this is try-catch wrapped so that we can guarantee that the nonceLock is released
       try {
@@ -1473,8 +1535,10 @@ export default class TransactionController extends EventEmitter {
    */
   async signTransaction(txId) {
     const txMeta = this.txStateManager.getTransaction(txId);
+    const { provider: providerConfig } = txMeta.txParams.assetDetails || {};
     // add network/chain id
-    const chainId = this.getChainId();
+    const customChainId = parseInt(providerConfig.chainId, 16);
+    const chainId = customChainId || this.getChainId();
     const type = isEIP1559Transaction(txMeta)
       ? TransactionEnvelopeType.feeMarket
       : TransactionEnvelopeType.legacy;
@@ -1486,8 +1550,13 @@ export default class TransactionController extends EventEmitter {
     };
     // sign tx
     const fromAddress = txParams.from;
-    const common = await this.getCommonConfiguration(txParams.from);
-    const unsignedEthTx = TransactionFactory.fromTxData(txParams, { common });
+    const common = await this.getCommonConfiguration(
+      txParams.from,
+      providerConfig,
+    );
+    const unsignedEthTx = TransactionFactory.fromTxData(txParams, {
+      common,
+    });
     const signedEthTx = await this.signEthTx(unsignedEthTx, fromAddress);
 
     // add r,s,v values for provider request purposes see createMetamaskMiddleware
@@ -1517,9 +1586,14 @@ export default class TransactionController extends EventEmitter {
    */
   async publishTransaction(txId, rawTx, actionId) {
     const txMeta = this.txStateManager.getTransaction(txId);
+    let { query } = this;
+    const { provider } = txMeta.txParams.assetDetails || {};
+    if (provider) {
+      query = this.getCustomQuery(provider);
+    }
     txMeta.rawTx = rawTx;
     if (txMeta.type === TransactionType.swap) {
-      const preTxBalance = await this.query.getBalance(txMeta.txParams.from);
+      const preTxBalance = await query.getBalance(txMeta.txParams.from);
       txMeta.preTxBalance = preTxBalance.toString(16);
     }
     this.txStateManager.updateTransaction(
@@ -1528,7 +1602,7 @@ export default class TransactionController extends EventEmitter {
     );
     let txHash;
     try {
-      txHash = await this.query.sendRawTransaction(rawTx);
+      txHash = await query.sendRawTransaction(rawTx);
     } catch (error) {
       if (error.message.toLowerCase().includes('known transaction')) {
         txHash = keccak(toBuffer(addHexPrefix(rawTx), 'hex')).toString('hex');

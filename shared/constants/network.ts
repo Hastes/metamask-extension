@@ -96,6 +96,10 @@ export const NETWORK_TYPES = {
   RPC: 'rpc',
   SEPOLIA: 'sepolia',
   LINEA_TESTNET: 'lineatestnet',
+
+  BITCOIN: 'bitcoin',
+  TRON: 'tron',
+  BINANCE_CHAIN: 'binance_chain',
 } as const;
 
 /**
@@ -149,9 +153,19 @@ export const CHAIN_IDS = {
   SEPOLIA: '0xaa36a7',
   LINEA_TESTNET: '0xe704',
   AURORA: '0x4e454152',
-  MOONBEAM: '0x504',
-  MOONBEAM_TESTNET: '0x507',
-  MOONRIVER: '0x505',
+  TRON: '0x2494104990',
+
+  // non-web3
+  BTC: 'bitcoin',
+  BINANCE_CHAIN: 'binance-chain',
+} as const;
+
+export const CHAIN_ALIASES = {
+  [CHAIN_IDS.MAINNET]: 'ERC-20',
+  [CHAIN_IDS.BSC_TESTNET]: 'BEP-20',
+  [CHAIN_IDS.BINANCE_CHAIN]: 'BEP-2',
+  [CHAIN_IDS.TRON]: 'TRC-20',
+  [CHAIN_IDS.BTC]: 'BITCOIN',
 } as const;
 
 /**
@@ -177,6 +191,9 @@ export const HARMONY_DISPLAY_NAME = 'Harmony Mainnet Shard 0';
 export const PALM_DISPLAY_NAME = 'Palm';
 export const AURORA_DISPLAY_NAME = 'Aurora Mainnet';
 export const CELO_DISPLAY_NAME = 'Celo Mainnet';
+
+export const TRON_DISPLAY_NAME = 'Tron Testnet';
+export const BTC_DISPLAY_NAME = 'Bitcoin Testnet';
 
 export const infuraProjectId = process.env.INFURA_PROJECT_ID;
 export const getRpcUrl = ({

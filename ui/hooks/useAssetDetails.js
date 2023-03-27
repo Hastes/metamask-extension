@@ -8,13 +8,20 @@ import { isEqualCaseInsensitive } from '../../shared/modules/string-utils';
 import { usePrevious } from './usePrevious';
 import { useTokenTracker } from './useTokenTracker';
 
-export function useAssetDetails(tokenAddress, userAddress, transactionData) {
+export function useAssetDetails(
+  tokenAddress,
+  userAddress,
+  transactionData,
+  chainId,
+) {
   const dispatch = useDispatch();
   // state selectors
   const nfts = useSelector(getNfts);
   const tokens = useSelector(getTokens, isEqual);
-  const currentToken = tokens.find((token) =>
-    isEqualCaseInsensitive(token.address, tokenAddress),
+  const currentToken = tokens.find(
+    (token) =>
+      isEqualCaseInsensitive(token.account, userAddress) &&
+      token.provider.chainId === chainId,
   );
 
   // in-hook state

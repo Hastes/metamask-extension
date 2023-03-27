@@ -11,6 +11,7 @@ import {
   getRecipient,
   acknowledgeRecipientWarning,
   getRecipientWarningAcknowledgement,
+  getCurrentDraftTransaction,
 } from '../../../ducks/send';
 import SendContent from './send-content.component';
 
@@ -18,12 +19,12 @@ function mapStateToProps(state) {
   const recipient = getRecipient(state);
   const recipientWarningAcknowledged =
     getRecipientWarningAcknowledgement(state);
+  const tx = getCurrentDraftTransaction(state);
 
   return {
     isEthGasPrice: getIsEthGasPriceFetched(state),
     noGasPrice: getNoGasPriceFetched(state),
-    networkOrAccountNotSupports1559:
-      checkNetworkOrAccountNotSupports1559(state),
+    networkOrAccountNotSupports1559: !tx.eip1559support,
     getIsBalanceInsufficient: getIsBalanceInsufficient(state),
     asset: getSendAsset(state),
     assetError: getAssetError(state),

@@ -66,7 +66,7 @@ export default class PreferencesController {
         ? LedgerTransportTypes.webhid
         : LedgerTransportTypes.u2f,
       transactionSecurityCheckEnabled: false,
-      theme: ThemeType.os,
+      theme: ThemeType.light,
       openSeaTransactionSecurityProviderPopoverHasBeenShown: false,
       ...opts.initState,
     };

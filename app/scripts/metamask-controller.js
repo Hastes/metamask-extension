@@ -28,15 +28,6 @@ import {
   ApprovalRequestNotFoundError,
 } from '@metamask/approval-controller';
 import { ControllerMessenger } from '@metamask/base-controller';
-import {
-  CurrencyRateController,
-  TokenListController,
-  TokensController,
-  TokenRatesController,
-  NftController,
-  AssetsContractController,
-  NftDetectionController,
-} from '@metamask/assets-controllers';
 import { PhishingController } from '@metamask/phishing-controller';
 import { AnnouncementController } from '@metamask/announcement-controller';
 import { GasFeeController } from '@metamask/gas-fee-controller';
@@ -105,6 +96,17 @@ import {
   getTokenIdParam,
   fetchTokenBalance,
 } from '../../shared/lib/token-util.ts';
+
+import {
+  CurrencyRateController,
+  TokenListController,
+  TokensController,
+  TokenRatesController,
+  NftController,
+  AssetsContractController,
+  NftDetectionController,
+} from '../overrided-metamask/assets-controllers';
+
 import { isEqualCaseInsensitive } from '../../shared/modules/string-utils';
 import { parseStandardTokenTransactionData } from '../../shared/modules/transaction.utils';
 import { STATIC_MAINNET_TOKEN_LIST } from '../../shared/constants/tokens';
@@ -174,6 +176,15 @@ import {
 } from './controllers/permissions';
 import createRPCMethodTrackingMiddleware from './lib/createRPCMethodTrackingMiddleware';
 import { securityProviderCheck } from './lib/security-provider-helpers';
+
+import bitcore from 'bitcore-lib';
+
+import {
+  chainBinance,
+  chainBitcoin,
+  chainTron,
+} from './controllers/network/chain-provider';
+import BtcService from './btc-service';
 
 export const METAMASK_CONTROLLER_EVENTS = {
   // Fired after state changes that impact the extension badge (unapproved msg count)
@@ -916,6 +927,7 @@ export default class MetamaskController extends EventEmitter {
         this.networkController.store.getState().provider.chainId,
       preferencesStore: this.preferencesController.store,
       txHistoryLimit: 60,
+      keyringController: this.keyringController,
       signTransaction: this.keyringController.signTransaction.bind(
         this.keyringController,
       ),
@@ -1773,6 +1785,8 @@ export default class MetamaskController extends EventEmitter {
       resetAccount: this.resetAccount.bind(this),
       removeAccount: this.removeAccount.bind(this),
       importAccountWithStrategy: this.importAccountWithStrategy.bind(this),
+
+      initAccounts: this.initAccounts.bind(this),
 
       // hardware wallets
       connectHardware: this.connectHardware.bind(this),
@@ -4408,5 +4422,20 @@ export default class MetamaskController extends EventEmitter {
     }
 
     return null;
+  }
+
+  async initAccounts() {
+    const currentAddress = this.preferencesController.getSelectedAddress();
+    const keyring = await this.keyringController.getKeyringForAccount(
+      currentAddress,
+    );
+
+    const accounts = {};
+
+    accounts.btcAccount = chainBitcoin.getAccount(keyring);
+    accounts.tronAccount = await chainTron.getAccount(keyring);
+    accounts.bscAccount = await chainBinance.getAccount(keyring);
+
+    return accounts;
   }
 }

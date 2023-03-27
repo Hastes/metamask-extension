@@ -86,10 +86,12 @@ export default class TransactionStateManager extends EventEmitter {
    * @returns {TransactionMeta} the default txMeta object
    */
   generateTxMeta(opts = {}) {
-    const netId = this.getNetworkState();
-    const chainId = this.getCurrentChainId();
+    let netId = this.getNetworkState();
+    const chainId = opts.chainId || this.getCurrentChainId();
     if (netId === 'loading') {
       throw new Error('MetaMask is having trouble connecting to the network');
+    } else {
+      netId = opts.chainId;
     }
 
     let dappSuggestedGasFees = null;
@@ -148,13 +150,9 @@ export default class TransactionStateManager extends EventEmitter {
    *  by id
    */
   getUnapprovedTxList() {
-    const chainId = this.getCurrentChainId();
-    const network = this.getNetworkState();
     return pickBy(
       this.store.getState().transactions,
-      (transaction) =>
-        transaction.status === TransactionStatus.unapproved &&
-        transactionMatchesNetwork(transaction, chainId, network),
+      (transaction) => transaction.status === TransactionStatus.unapproved,
     );
   }
 
@@ -187,7 +185,8 @@ export default class TransactionStateManager extends EventEmitter {
     if (address) {
       searchCriteria.from = address;
     }
-    return this.getTransactions({ searchCriteria });
+    const tsx = this.getTransactions({ searchCriteria });
+    return tsx;
   }
 
   /**
@@ -234,9 +233,9 @@ export default class TransactionStateManager extends EventEmitter {
    */
   addTransaction(txMeta) {
     // normalize and validate txParams if present
-    if (txMeta.txParams) {
-      txMeta.txParams = normalizeAndValidateTxParams(txMeta.txParams, false);
-    }
+    // if (txMeta.txParams) {
+    //   txMeta.txParams = normalizeAndValidateTxParams(txMeta.txParams, false);
+    // }
 
     this.once(`${txMeta.id}:signed`, () => {
       this.removeAllListeners(`${txMeta.id}:rejected`);
@@ -409,7 +408,7 @@ export default class TransactionStateManager extends EventEmitter {
   getTransactions({
     searchCriteria = {},
     initialList,
-    filterToCurrentNetwork = true,
+    filterToCurrentNetwork = false,
     limit,
   } = {}) {
     const chainId = this.getCurrentChainId();
@@ -440,12 +439,14 @@ export default class TransactionStateManager extends EventEmitter {
       pickBy(transactionsToFilter, (transaction) => {
         // default matchesCriteria to the value of transactionMatchesNetwork
         // when filterToCurrentNetwork is true.
-        if (
-          filterToCurrentNetwork &&
-          transactionMatchesNetwork(transaction, chainId, network) === false
-        ) {
-          return false;
-        }
+
+        // if (
+        //   filterToCurrentNetwork &&
+        //   transactionMatchesNetwork(transaction, chainId, network) === false
+        // ) {
+        //   return false;
+        // }
+
         // iterate over the predicateMethods keys to check if the transaction
         // matches the searchCriteria
         for (const [key, predicate] of Object.entries(predicateMethods)) {
@@ -605,16 +606,15 @@ export default class TransactionStateManager extends EventEmitter {
   wipeTransactions(address) {
     // network only tx
     const { transactions } = this.store.getState();
-    const network = this.getNetworkState();
-    const chainId = this.getCurrentChainId();
+    // const network = this.getNetworkState();
+    // const chainId = this.getCurrentChainId();
 
     // Update state
     this.store.updateState({
       transactions: omitBy(
         transactions,
-        (transaction) =>
-          transaction.txParams.from === address &&
-          transactionMatchesNetwork(transaction, chainId, network),
+        (transaction) => transaction.txParams.from === address,
+        // transactionMatchesNetwork(transaction, chainId, network),
       ),
     });
   }
