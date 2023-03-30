@@ -15,8 +15,7 @@ import {
   ICON_SIZES,
 } from '../../../../components/component-library';
 import { IconColor } from '../../../../helpers/constants/design-system';
-import { NETWORK_TYPES } from '../../../../../shared/constants/network';
-import { chainTron } from '../../../../../app/scripts/controllers/network/chain-provider';
+import { ChainProvider } from '../../../../../app/scripts/controllers/network/chain-provider';
 
 export default class DomainInput extends Component {
   static contextTypes = {
@@ -69,22 +68,8 @@ export default class DomainInput extends Component {
       resetDomainResolution,
       sendAsset,
     } = this.props;
-    console.log(sendAsset);
     const input = value.trim();
-
-    const ERC20Validator = () =>
-      isValidHexAddress(input, {
-        mixedCaseUseChecksum: true,
-      });
-
-    const VALIDATION_BY_NETWORK = {
-      [NETWORK_TYPES.MAINNET]: ERC20Validator,
-      [NETWORK_TYPES.RPC]: ERC20Validator,
-      [NETWORK_TYPES.TRON]: () => chainTron.isAddress(input),
-    };
-
-    const validateFunc =
-      VALIDATION_BY_NETWORK[sendAsset.details.provider.type] || ERC20Validator;
+    const chainProvider = new ChainProvider(sendAsset.details.provider);
 
     onChange(input);
     if (internalSearch) {
@@ -96,7 +81,7 @@ export default class DomainInput extends Component {
       lookupEnsName(input);
     } else {
       resetDomainResolution();
-      if (onValidAddressTyped && !isBurnAddress(input) && validateFunc()) {
+      if (onValidAddressTyped && chainProvider.isAddress(input)) {
         onValidAddressTyped(input);
       }
     }

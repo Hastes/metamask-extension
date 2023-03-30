@@ -1510,7 +1510,7 @@ const state = {
     alertOpen: false,
     alertMessage: null,
     qrCodeData: null,
-    networkDropdownOpen: false,
+    settingsDropdownOpen: false,
     accountDetail: {
       subview: 'transactions',
     },

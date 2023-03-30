@@ -100,6 +100,8 @@ import { INVALID_ASSET_TYPE } from '../../helpers/constants/error-keys';
 import { isEqualCaseInsensitive } from '../../../shared/modules/string-utils';
 import { parseStandardTokenTransactionData } from '../../../shared/modules/transaction.utils';
 import { getTokenValueParam } from '../../../shared/lib/metamask-controller-utils';
+import { ChainProvider } from '../../../app/scripts/controllers/network/chain-provider';
+
 import {
   calcGasTotal,
   calcTokenAmount,
@@ -453,7 +455,7 @@ export const initialState = {
   gasLimitMinimum: GAS_LIMITS.SIMPLE,
   gasTotalForLayer1: '0x0',
   recipientMode: RECIPIENT_SEARCH_MODES.CONTACT_LIST,
-  recipientInput: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  recipientInput: '',
   selectedAccount: {
     address: null,
     balance: '0x0',
@@ -1344,23 +1346,12 @@ const slice = createSlice({
           draftTransaction.recipient.error = null;
           draftTransaction.recipient.warning = null;
         } else {
-          const {
-            chainId,
-            tokens,
-            tokenAddressList,
-            isProbablyAnAssetContract,
-          } = action.payload;
-
-          if (
-            isBurnAddress(state.recipientInput) ||
-            (!isValidHexAddress(state.recipientInput, {
-              mixedCaseUseChecksum: true,
-            }) &&
-              !isValidDomainName(state.recipientInput))
-          ) {
-            draftTransaction.recipient.error = isDefaultMetaMaskChain(chainId)
-              ? INVALID_RECIPIENT_ADDRESS_ERROR
-              : INVALID_RECIPIENT_ADDRESS_NOT_ETH_NETWORK_ERROR;
+          const { isProbablyAnAssetContract } = action.payload;
+          const chainProvider = new ChainProvider(
+            draftTransaction.asset.details.provider,
+          );
+          if (!chainProvider.isAddress(state.recipientInput)) {
+            draftTransaction.recipient.error = INVALID_RECIPIENT_ADDRESS_ERROR;
           } else if (
             isOriginContractAddress(
               state.recipientInput,

@@ -12,8 +12,8 @@ const mockToggleAccountMenu = jest.fn();
 
 jest.mock('../../../store/actions', () => {
   return {
-    showNetworkDropdown: () => mockShowNetworkDropdown,
-    hideNetworkDropdown: () => mockHideNetworkDropdown,
+    showSettingsDropdown: () => mockShowNetworkDropdown,
+    hideSettingsDropdown: () => mockHideNetworkDropdown,
     toggleAccountMenu: () => mockToggleAccountMenu,
   };
 });
@@ -49,7 +49,7 @@ describe('App Header', () => {
   });
 
   describe('Network', () => {
-    it('shows network dropdown when networkDropdownOpen is false', () => {
+    it('shows network dropdown when settingsDropdownOpen is false', () => {
       const { queryByTestId } = renderWithProvider(<AppHeader />, store);
 
       const networkDisplay = queryByTestId('network-display');
@@ -60,11 +60,11 @@ describe('App Header', () => {
       expect(mockHideNetworkDropdown).not.toHaveBeenCalled();
     });
 
-    it('hides network dropdown when networkDropdownOpen is true', () => {
+    it('hides network dropdown when settingsDropdownOpen is true', () => {
       const openNetworkDropdownState = {
         ...mockState,
         appState: {
-          networkDropdownOpen: true,
+          settingsDropdownOpen: true,
         },
       };
 

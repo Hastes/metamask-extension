@@ -15,6 +15,7 @@
 @import '../pages/pages';
 @import './errors.scss';
 @import './loading.scss';
+@import './design-system/design-tokens.scss';
 
 /*
   ITCSS
@@ -33,4 +34,3 @@
   Third Party Library Styles
 */
 @import '../../node_modules/react-tippy/dist/tippy';
-@import '../../node_modules/@metamask/design-tokens/src/css/design-tokens';

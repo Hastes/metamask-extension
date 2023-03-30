@@ -13,6 +13,7 @@ import UserPreferencedCurrencyDisplay from '../../components/app/user-preference
 
 import { PRIMARY, SECONDARY } from '../../helpers/constants/common';
 import TextField from '../../components/ui/text-field';
+import CurrencyAssetDisplay from '../../components/ui/currency-asset-display';
 import SimulationErrorMessage from '../../components/ui/simulation-error-message';
 import { EVENT } from '../../../shared/constants/metametrics';
 import {
@@ -52,6 +53,7 @@ import { MIN_GAS_LIMIT_DEC } from '../send/send.constants';
 import {
   NETWORK_TO_NAME_MAP,
   CHAIN_IDS,
+  NETWORK_TYPES,
 } from '../../../shared/constants/network';
 import {
   addHexes,
@@ -591,48 +593,51 @@ export default class ConfirmTransactionBase extends Component {
           type={txData.type}
           isBuyableChain={isBuyableChain}
         />
-        <TransactionDetail
-          disabled={isDisabled()}
-          userAcknowledgedGasMissing={userAcknowledgedGasMissing}
-          onEdit={
-            renderSimulationFailureWarning || isMultiLayerFeeNetwork
-              ? null
-              : () => this.handleEditGas()
-          }
-          rows={[
-            renderSimulationFailureWarning && simulationFailureWarning(),
-            !renderSimulationFailureWarning &&
-              !isMultiLayerFeeNetwork &&
-              renderGasDetailsItem(),
-            !renderSimulationFailureWarning && isMultiLayerFeeNetwork && (
-              <MultiLayerFeeMessage
-                transaction={txData}
-                layer2fee={hexMinimumTransactionFee}
-                nativeCurrency={nativeCurrency}
-              />
-            ),
-            !isMultiLayerFeeNetwork && (
-              <TransactionDetailItem
-                key="total-item"
-                detailTitle={t('total')}
-                detailText={useCurrencyRateCheck && renderTotalDetailText()}
-                detailTotal={renderTotalDetailTotal()}
-                subTitle={t('transactionDetailGasTotalSubtitle')}
-                subText={
-                  <div className="confirm-page-container-content__total-amount">
-                    <LoadingHeartBeat
-                      estimateUsed={this.props.txData?.userFeeLevel}
-                    />
-                    <strong key="editGasSubTextAmountLabel">
-                      {t('editGasSubTextAmountLabel')}
-                    </strong>{' '}
-                    {renderTotalMaxAmount()}
-                  </div>
-                }
-              />
-            ),
-          ]}
-        />
+        {txData.isTrc20 ? null : (
+          <TransactionDetail
+            disabled={isDisabled()}
+            userAcknowledgedGasMissing={userAcknowledgedGasMissing}
+            onEdit={
+              renderSimulationFailureWarning || isMultiLayerFeeNetwork
+                ? null
+                : () => this.handleEditGas()
+            }
+            rows={[
+              renderSimulationFailureWarning && simulationFailureWarning(),
+              !renderSimulationFailureWarning &&
+                !isMultiLayerFeeNetwork &&
+                !txData.isTrc20 &&
+                renderGasDetailsItem(),
+              !renderSimulationFailureWarning && isMultiLayerFeeNetwork && (
+                <MultiLayerFeeMessage
+                  transaction={txData}
+                  layer2fee={hexMinimumTransactionFee}
+                  nativeCurrency={nativeCurrency}
+                />
+              ),
+              !isMultiLayerFeeNetwork && (
+                <TransactionDetailItem
+                  key="total-item"
+                  detailTitle={t('total')}
+                  detailText={useCurrencyRateCheck && renderTotalDetailText()}
+                  detailTotal={renderTotalDetailTotal()}
+                  subTitle={t('transactionDetailGasTotalSubtitle')}
+                  subText={
+                    <div className="confirm-page-container-content__total-amount">
+                      <LoadingHeartBeat
+                        estimateUsed={this.props.txData?.userFeeLevel}
+                      />
+                      <strong key="editGasSubTextAmountLabel">
+                        {t('editGasSubTextAmountLabel')}
+                      </strong>{' '}
+                      {renderTotalMaxAmount()}
+                    </div>
+                  }
+                />
+              ),
+            ]}
+          />
+        )}
         {nonceField}
         {showLedgerSteps ? (
           <LedgerInstructionField
@@ -844,6 +849,9 @@ export default class ConfirmTransactionBase extends Component {
 
   renderTitleComponent() {
     const { title, hexTransactionAmount, txData, assetDetails } = this.props;
+    const isEthType = [NETWORK_TYPES.MAINNET, NETWORK_TYPES.RPC].includes(
+      assetDetails.provider.type,
+    );
 
     // Title string passed in by props takes priority
     if (title) {
@@ -852,16 +860,23 @@ export default class ConfirmTransactionBase extends Component {
     const isContractInteraction =
       txData.type === TransactionType.contractInteraction;
 
+    if (isEthType) {
+      return (
+        <UserPreferencedCurrencyDisplay
+          value={hexTransactionAmount}
+          asset={assetDetails}
+          type={PRIMARY}
+          showEthLogo={assetDetails.provider.chainId === CHAIN_IDS.MAINNET}
+          ethLogoHeight={24}
+          numberOfDecimals={assetDetails.decimals}
+          currency={assetDetails.symbol}
+          hideLabel={!isContractInteraction}
+          showCurrencySuffix={isContractInteraction}
+        />
+      );
+    }
     return (
-      <UserPreferencedCurrencyDisplay
-        value={hexTransactionAmount}
-        type={PRIMARY}
-        showEthLogo={assetDetails.chainId === CHAIN_IDS.MAINNET}
-        ethLogoHeight={24}
-        numberOfDecimals={assetDetails.decimals}
-        hideLabel={!isContractInteraction}
-        showCurrencySuffix={isContractInteraction}
-      />
+      <CurrencyAssetDisplay value={hexTransactionAmount} asset={assetDetails} />
     );
   }
 

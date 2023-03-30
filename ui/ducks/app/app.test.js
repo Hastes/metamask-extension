@@ -21,22 +21,12 @@ describe('App State', () => {
     expect.anything(initState);
   });
 
-  it('sets networkDropdownOpen dropdown to true', () => {
+  it('sets settingsDropdownOpen dropdown to true', () => {
     const state = reduceApp(metamaskState, {
-      type: actions.NETWORK_DROPDOWN_OPEN,
+      type: actions.SETTINGS_DROPDOWN_OPEN,
     });
 
-    expect(state.networkDropdownOpen).toStrictEqual(true);
-  });
-
-  it('sets networkDropdownOpen dropdown to false', () => {
-    const dropdown = { networkDropdowopen: true };
-    const state = { ...metamaskState, ...dropdown };
-    const newState = reduceApp(state, {
-      type: actions.NETWORK_DROPDOWN_CLOSE,
-    });
-
-    expect(newState.networkDropdownOpen).toStrictEqual(false);
+    expect(state.settingsDropdownOpen).toStrictEqual(true);
   });
 
   it('opens alert', () => {

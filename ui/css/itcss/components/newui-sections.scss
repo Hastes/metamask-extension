@@ -31,6 +31,7 @@
 // Main container
 .main-container {
   z-index: $main-container-z-index;
+  border-radius: 5px;
 }
 
 .main-container::-webkit-scrollbar {
@@ -43,6 +44,7 @@
   flex: 1 0 auto;
   min-height: 0;
   width: 100%;
+  background-color: var(--color-background-default);
 }
 
 // main-container media queries

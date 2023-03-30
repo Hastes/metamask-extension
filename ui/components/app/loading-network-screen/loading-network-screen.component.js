@@ -19,7 +19,7 @@ export default class LoadingNetworkScreen extends PureComponent {
     cancelTime: PropTypes.number,
     provider: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     providerId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    showNetworkDropdown: PropTypes.func,
+    showSettingsDropdown: PropTypes.func,
     setProviderArgs: PropTypes.array,
     setProviderType: PropTypes.func,
     rollbackToPreviousProvider: PropTypes.func,
@@ -57,7 +57,7 @@ export default class LoadingNetworkScreen extends PureComponent {
   };
 
   renderDeprecatedRpcUrlWarning = () => {
-    const { showNetworkDropdown } = this.props;
+    const { showSettingsDropdown } = this.props;
 
     return (
       <div className="loading-overlay__error-screen">
@@ -68,7 +68,7 @@ export default class LoadingNetworkScreen extends PureComponent {
             type="secondary"
             onClick={() => {
               window.clearTimeout(this.cancelCallTimeout);
-              showNetworkDropdown();
+              showSettingsDropdown();
             }}
           >
             {this.context.t('switchNetworks')}
@@ -79,7 +79,7 @@ export default class LoadingNetworkScreen extends PureComponent {
   };
 
   renderErrorScreenContent = () => {
-    const { showNetworkDropdown, setProviderArgs, setProviderType } =
+    const { showSettingsDropdown, setProviderArgs, setProviderType } =
       this.props;
 
     return (
@@ -91,7 +91,7 @@ export default class LoadingNetworkScreen extends PureComponent {
             type="secondary"
             onClick={() => {
               window.clearTimeout(this.cancelCallTimeout);
-              showNetworkDropdown();
+              showSettingsDropdown();
             }}
           >
             {this.context.t('switchNetworks')}

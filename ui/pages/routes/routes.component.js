@@ -487,7 +487,7 @@ export default class Routes extends Component {
           />
         )}
         {this.showOnboardingHeader() && <OnboardingAppHeader />}
-        {completedOnboarding ? <NetworkDropdown /> : null}
+        {true ? <NetworkDropdown /> : null}
         {process.env.MULTICHAIN ? null : <AccountMenu />}
         {process.env.MULTICHAIN && isAccountMenuOpen ? (
           <AccountListMenu onClose={() => toggleAccountMenu()} />

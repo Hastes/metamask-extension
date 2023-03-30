@@ -2,9 +2,9 @@
   &__container {
     @include H6;
 
-    background: var(--color-background-default);
+    background: var(--color-background-alternative);
     box-shadow: var(--shadow-size-sm) var(--color-shadow-default);
-    border-radius: 8px;
+    border-radius: 10px;
     width: 225px;
     color: var(--color-text-default);
     display: flex;

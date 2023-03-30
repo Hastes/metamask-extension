@@ -172,7 +172,7 @@ AssetListItem.propTypes = {
   className: PropTypes.string,
   'data-testid': PropTypes.string,
   iconClassName: PropTypes.string,
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   tokenAddress: PropTypes.string,
   tokenSymbol: PropTypes.string,
   tokenDecimals: PropTypes.number,
@@ -195,6 +195,7 @@ AssetListItem.defaultProps = {
   warning: undefined,
   tokenContract: undefined,
   tokenProvider: undefined,
+  onClick: undefined,
 };
 
 export default AssetListItem;

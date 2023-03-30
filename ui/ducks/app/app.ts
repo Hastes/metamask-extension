@@ -25,7 +25,7 @@ interface AppState {
     type?: string | null;
     values?: { address?: string | null };
   } | null;
-  networkDropdownOpen: boolean;
+  settingsDropdownOpen: boolean;
   accountDetail: {
     subview?: string;
     accountExport?: string;
@@ -88,7 +88,7 @@ const initialState: AppState = {
   alertOpen: false,
   alertMessage: null,
   qrCodeData: null,
-  networkDropdownOpen: false,
+  settingsDropdownOpen: false,
   accountDetail: {
     privateKey: '',
   },
@@ -141,16 +141,16 @@ export default function reduceApp(
 
   switch (action.type) {
     // dropdown methods
-    case actionConstants.NETWORK_DROPDOWN_OPEN:
+    case actionConstants.SETTINGS_DROPDOWN_OPEN:
       return {
         ...appState,
-        networkDropdownOpen: true,
+        settingsDropdownOpen: true,
       };
 
-    case actionConstants.NETWORK_DROPDOWN_CLOSE:
+    case actionConstants.SETTINGS_DROPDOWN_CLOSE:
       return {
         ...appState,
-        networkDropdownOpen: false,
+        settingsDropdownOpen: false,
       };
 
     // alert methods

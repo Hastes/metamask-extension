@@ -123,7 +123,6 @@ const mapStateToProps = (state, ownProps) => {
     data,
     assetDetails,
   } = (transaction && transaction.txParams) || txParams;
-
   const transactionData = parseStandardTokenTransactionData(data);
   const tokenToAddress = getTokenAddressParam(transactionData);
   const { address } = getSelectedAccount(state);

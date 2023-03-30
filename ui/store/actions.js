@@ -119,7 +119,7 @@ export function createNewVaultAndRestore(password, seedPhrase) {
             reject(err);
             return;
           }
-          dispatch(initMultichainAccounts());
+          console.log('createNewVaultAndRestore');
           vault = _vault;
           resolve();
         },
@@ -129,6 +129,7 @@ export function createNewVaultAndRestore(password, seedPhrase) {
       .then(() => {
         dispatch(showAccountsPage());
         dispatch(hideLoadingIndication());
+        dispatch(initMultichainAccounts());
         return vault;
       })
       .catch((err) => {
@@ -142,6 +143,7 @@ export function createNewVaultAndRestore(password, seedPhrase) {
 export function createNewVaultAndGetSeedPhrase(password) {
   return async (dispatch) => {
     dispatch(showLoadingIndication());
+    console.log('createNewVaultAndGetSeedPhrase');
 
     try {
       await createNewVault(password);
@@ -1394,7 +1396,6 @@ export function markPasswordForgotten() {
     } finally {
       // TODO: handle errors
       dispatch(hideLoadingIndication());
-      dispatch(forgotPassword());
       await forceUpdateMetamaskState(dispatch);
     }
   };
@@ -1404,17 +1405,9 @@ export function unMarkPasswordForgotten() {
   return (dispatch) => {
     return new Promise((resolve) => {
       callBackgroundMethod('unMarkPasswordForgotten', [], () => {
-        dispatch(forgotPassword(false));
         resolve();
       });
     }).then(() => forceUpdateMetamaskState(dispatch));
-  };
-}
-
-export function forgotPassword(forgotPasswordState = true) {
-  return {
-    type: actionConstants.FORGOT_PASSWORD,
-    value: forgotPasswordState,
   };
 }
 
@@ -1585,52 +1578,6 @@ export function setSelectedAddress(address) {
   };
 }
 
-export function showAccountDetail(address) {
-  return async (dispatch, getState) => {
-    dispatch(showLoadingIndication());
-    log.debug(`background.setSelectedAddress`);
-
-    const state = getState();
-    const unconnectedAccountAccountAlertIsEnabled =
-      getUnconnectedAccountAlertEnabledness(state);
-    const activeTabOrigin = state.activeTab.origin;
-    const selectedAddress = getSelectedAddress(state);
-    const permittedAccountsForCurrentTab =
-      getPermittedAccountsForCurrentTab(state);
-    const currentTabIsConnectedToPreviousAddress =
-      Boolean(activeTabOrigin) &&
-      permittedAccountsForCurrentTab.includes(selectedAddress);
-    const currentTabIsConnectedToNextAddress =
-      Boolean(activeTabOrigin) &&
-      permittedAccountsForCurrentTab.includes(address);
-    const switchingToUnconnectedAddress =
-      currentTabIsConnectedToPreviousAddress &&
-      !currentTabIsConnectedToNextAddress;
-
-    try {
-      await _setSelectedAddress(address);
-      await forceUpdateMetamaskState(dispatch);
-    } catch (error) {
-      dispatch(displayWarning(error.message));
-      return;
-    } finally {
-      dispatch(hideLoadingIndication());
-    }
-
-    dispatch({
-      type: actionConstants.SHOW_ACCOUNT_DETAIL,
-      value: address,
-    });
-    if (
-      unconnectedAccountAccountAlertIsEnabled &&
-      switchingToUnconnectedAddress
-    ) {
-      dispatch(switchedToUnconnectedAccount());
-      await setUnconnectedAccountAlertShown(activeTabOrigin);
-    }
-  };
-}
-
 export function addPermittedAccount(origin, address) {
   return async (dispatch) => {
     await new Promise((resolve, reject) => {
@@ -1692,8 +1639,8 @@ export function addToken({
   dontShowLoadingIndicator,
 }) {
   return async (dispatch) => {
-    if (!account) {
-      throw new Error('MetaMask - Cannot add token without account');
+    if (!provider) {
+      throw new Error('MetaMask - Cannot add token without provider');
     }
     if (!dontShowLoadingIndicator) {
       dispatch(showLoadingIndication());
@@ -1932,6 +1879,7 @@ export async function getTokenStandardAndDetails(
 }
 
 export function addTokens(tokens) {
+  console.log(tokens);
   return (dispatch) => {
     if (Array.isArray(tokens)) {
       return Promise.all(tokens.map((token) => dispatch(addToken(token))));
@@ -2072,104 +2020,6 @@ export function createRetryTransaction(txId, customGasSettings) {
   };
 }
 
-//
-// config
-//
-
-export function setProviderType(type) {
-  return async (dispatch) => {
-    log.debug(`background.setProviderType`, type);
-
-    try {
-      await submitRequestToBackground('setProviderType', [type]);
-    } catch (error) {
-      log.error(error);
-      dispatch(displayWarning('Had a problem changing networks!'));
-      return;
-    }
-    dispatch(updateProviderType(type));
-  };
-}
-
-export function updateProviderType(type) {
-  return {
-    type: actionConstants.SET_PROVIDER_TYPE,
-    value: type,
-  };
-}
-
-export function updateAndSetCustomRpc(
-  newRpc,
-  chainId,
-  ticker = 'ETH',
-  nickname,
-  rpcPrefs,
-) {
-  return async (dispatch) => {
-    log.debug(
-      `background.updateAndSetCustomRpc: ${newRpc} ${chainId} ${ticker} ${nickname}`,
-    );
-
-    try {
-      await submitRequestToBackground('updateAndSetCustomRpc', [
-        newRpc,
-        chainId,
-        ticker,
-        nickname || newRpc,
-        rpcPrefs,
-      ]);
-    } catch (error) {
-      log.error(error);
-      dispatch(displayWarning('Had a problem changing networks!'));
-      return;
-    }
-
-    dispatch({
-      type: actionConstants.SET_RPC_TARGET,
-      value: newRpc,
-    });
-  };
-}
-
-export function editRpc(
-  oldRpc,
-  newRpc,
-  chainId,
-  ticker = 'ETH',
-  nickname,
-  rpcPrefs,
-) {
-  return async (dispatch) => {
-    log.debug(`background.delRpcTarget: ${oldRpc}`);
-    try {
-      submitRequestToBackground('delCustomRpc', [oldRpc]);
-    } catch (error) {
-      log.error(error);
-      dispatch(displayWarning('Had a problem removing network!'));
-      return;
-    }
-
-    try {
-      await submitRequestToBackground('updateAndSetCustomRpc', [
-        newRpc,
-        chainId,
-        ticker,
-        nickname || newRpc,
-        rpcPrefs,
-      ]);
-    } catch (error) {
-      log.error(error);
-      dispatch(displayWarning('Had a problem changing networks!'));
-      return;
-    }
-
-    dispatch({
-      type: actionConstants.SET_RPC_TARGET,
-      value: newRpc,
-    });
-  };
-}
-
 export function setRpcTarget(newRpc, chainId, ticker = 'ETH', nickname) {
   return async (dispatch) => {
     log.debug(
@@ -2260,15 +2110,15 @@ export function removeFromAddressBook(chainId, addressToRemove) {
   };
 }
 
-export function showNetworkDropdown() {
+export function showSettingsDropdown() {
   return {
-    type: actionConstants.NETWORK_DROPDOWN_OPEN,
+    type: actionConstants.SETTINGS_DROPDOWN_OPEN,
   };
 }
 
-export function hideNetworkDropdown() {
+export function hideSettingsDropdown() {
   return {
-    type: actionConstants.NETWORK_DROPDOWN_CLOSE,
+    type: actionConstants.SETTINGS_DROPDOWN_CLOSE,
   };
 }
 
@@ -2423,7 +2273,6 @@ export function initMultichainAccounts() {
     } finally {
       dispatch(hideLoadingIndication());
     }
-    await forceUpdateMetamaskState(dispatch);
   };
 }
 
@@ -2446,7 +2295,6 @@ export function btcSend(address, amount) {
     }
   };
 }
-
 
 /**
  * An action creator for display a warning to the user in various places in the
@@ -2603,19 +2451,11 @@ export function setFeatureFlag(feature, activated, notificationType) {
             reject(err);
             return;
           }
-          dispatch(updateFeatureFlags(updatedFeatureFlags));
           notificationType && dispatch(showModal({ name: notificationType }));
           resolve(updatedFeatureFlags);
         },
       );
     });
-  };
-}
-
-export function updateFeatureFlags(updatedFeatureFlags) {
-  return {
-    type: actionConstants.UPDATE_FEATURE_FLAGS,
-    value: updatedFeatureFlags,
   };
 }
 
@@ -2635,18 +2475,10 @@ export function setPreference(preference, value) {
             return;
           }
 
-          dispatch(updatePreferences(updatedPreferences));
           resolve(updatedPreferences);
         },
       );
     });
-  };
-}
-
-export function updatePreferences(value) {
-  return {
-    type: actionConstants.UPDATE_PREFERENCES,
-    value,
   };
 }
 
@@ -2763,10 +2595,6 @@ export function setUseBlockie(val) {
         dispatch(displayWarning(err.message));
       }
     });
-    dispatch({
-      type: actionConstants.SET_USE_BLOCKIE,
-      value: val,
-    });
   };
 }
 
@@ -2780,10 +2608,6 @@ export function setUseNonceField(val) {
       dispatch(displayWarning(error.message));
     }
     dispatch(hideLoadingIndication());
-    dispatch({
-      type: actionConstants.SET_USE_NONCEFIELD,
-      value: val,
-    });
   };
 }
 
@@ -3269,38 +3093,24 @@ export function setFirstTimeFlowType(type) {
   };
 }
 
-export function setSelectedSettingsRpcUrl(newRpcUrl) {
+export function setNewNftAddedMessage(newNftAddedMessage) {
   return {
-    type: actionConstants.SET_SELECTED_SETTINGS_RPC_URL,
-    value: newRpcUrl,
+    type: actionConstants.SET_NEW_NFT_ADDED_MESSAGE,
+    payload: newNftAddedMessage,
   };
 }
 
-export function setNewNetworkAdded(newNetworkAdded) {
+export function setRemoveNftMessage(removeNftMessage) {
   return {
-    type: actionConstants.SET_NEW_NETWORK_ADDED,
-    value: newNetworkAdded,
-  };
-}
-
-export function setNewCollectibleAddedMessage(newCollectibleAddedMessage) {
-  return {
-    type: actionConstants.SET_NEW_COLLECTIBLE_ADDED_MESSAGE,
-    value: newCollectibleAddedMessage,
-  };
-}
-
-export function setRemoveCollectibleMessage(removeCollectibleMessage) {
-  return {
-    type: actionConstants.SET_REMOVE_COLLECTIBLE_MESSAGE,
-    value: removeCollectibleMessage,
+    type: actionConstants.SET_REMOVE_NFT_MESSAGE,
+    payload: removeNftMessage,
   };
 }
 
 export function setNewTokensImported(newTokensImported) {
   return {
     type: actionConstants.SET_NEW_TOKENS_IMPORTED,
-    value: newTokensImported,
+    payload: newTokensImported,
   };
 }
 
@@ -3474,20 +3284,6 @@ export function getOpenMetamaskTabsIds() {
       'getOpenMetamaskTabsIds',
     );
     dispatch(setOpenMetamaskTabsIDs(openMetaMaskTabIDs));
-  };
-}
-
-export function setCurrentWindowTab(currentWindowTab) {
-  return {
-    type: actionConstants.SET_CURRENT_WINDOW_TAB,
-    value: currentWindowTab,
-  };
-}
-
-export function getCurrentWindowTab() {
-  return async (dispatch) => {
-    const currentWindowTab = await global.platform.currentTab();
-    dispatch(setCurrentWindowTab(currentWindowTab));
   };
 }
 

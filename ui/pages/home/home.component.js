@@ -692,32 +692,32 @@ export default class Home extends PureComponent {
             <div className="home__support">
               {
                 ///: BEGIN:ONLY_INCLUDE_IN(main)
-                t('needHelp', [
-                  <a
-                    href={SUPPORT_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key="need-help-link"
-                    onClick={() => {
-                      this.context.trackEvent(
-                        {
-                          category: EVENT.CATEGORIES.HOME,
-                          event: EVENT_NAMES.SUPPORT_LINK_CLICKED,
-                          properties: {
-                            url: SUPPORT_LINK,
-                          },
-                        },
-                        {
-                          contextPropsIntoEventProperties: [
-                            CONTEXT_PROPS.PAGE_TITLE,
-                          ],
-                        },
-                      );
-                    }}
-                  >
-                    {t('needHelpLinkText')}
-                  </a>,
-                ])
+                // t('needHelp', [
+                //   <a
+                //     href={SUPPORT_LINK}
+                //     target="_blank"
+                //     rel="noopener noreferrer"
+                //     key="need-help-link"
+                //     onClick={() => {
+                //       this.context.trackEvent(
+                //         {
+                //           category: EVENT.CATEGORIES.HOME,
+                //           event: EVENT_NAMES.SUPPORT_LINK_CLICKED,
+                //           properties: {
+                //             url: SUPPORT_LINK,
+                //           },
+                //         },
+                //         {
+                //           contextPropsIntoEventProperties: [
+                //             CONTEXT_PROPS.PAGE_TITLE,
+                //           ],
+                //         },
+                //       );
+                //     }}
+                //   >
+                //     {t('needHelpLinkText')}
+                //   </a>,
+                // ])
                 ///: END:ONLY_INCLUDE_IN
               }
               {

@@ -55,11 +55,11 @@ export default class ChainEth implements ChainProvider {
    * @param address - account address
    */
   isAddress(address: string): boolean {
-    return (
+    const isAddress =
       !isBurnAddress(address) &&
       isValidHexAddress(address, {
         mixedCaseUseChecksum: true,
-      })
-    );
+      });
+    return isAddress;
   }
 }

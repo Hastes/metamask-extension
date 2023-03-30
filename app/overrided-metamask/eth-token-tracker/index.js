@@ -21,10 +21,6 @@ class TokenTracker extends SafeEventEmitter {
       pollingInterval,
     });
 
-    this.eth = new Eth(this.provider);
-    this.contract = new EthContract(this.eth);
-    this.TokenContract = this.contract(abi);
-
     const tokens = opts.tokens || [];
     this.balanceDecimals = opts.balanceDecimals;
 
@@ -70,33 +66,13 @@ class TokenTracker extends SafeEventEmitter {
   }
 
   createTokenFrom(opts, balanceDecimals) {
-    const { account, provider, contract, symbol, balance, decimals, image } = opts;
-
-    const contractToken = contract && this.TokenContract.at(contract);
-
-    let { eth } = this;
-    let ethProvider;
-
-    if (provider && provider.type === 'rpc') {
-      ethProvider = getProvider({
-        providerType: 'custom',
-        customRpcUrl: provider.rpcUrl,
-        customChainId: provider.chainId,
-      });
-      eth = new Eth(ethProvider);
-    }
-
-    if (provider && contractToken) {
-      contractToken.query.setProvider(ethProvider);
-    }
+    const { account, provider, symbol, balance, decimals, image } = opts;
 
     return new Token({
       provider,
       symbol,
       balance,
       decimals,
-      eth,
-      contract: contractToken,
       owner: account || this.userAddress,
       throwOnBalanceError: this.includeFailedTokens === false,
       balanceDecimals,

@@ -168,12 +168,8 @@ export const unconfirmedTransactionsCountSelector = createSelector(
     unapprovedDecryptMsgCount = 0,
     unapprovedEncryptionPublicKeyMsgCount = 0,
     unapprovedTypedMessagesCount = 0,
-    network,
-    chainId,
   ) => {
-    const filteredUnapprovedTxIds = Object.keys(unapprovedTxs).filter((txId) =>
-      transactionMatchesNetwork(unapprovedTxs[txId], chainId, network),
-    );
+    const filteredUnapprovedTxIds = Object.keys(unapprovedTxs);
 
     return (
       filteredUnapprovedTxIds.length +

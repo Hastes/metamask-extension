@@ -2675,15 +2675,15 @@ export function removeFromAddressBook(
   };
 }
 
-export function showNetworkDropdown(): Action {
+export function showSettingsDropdown(): Action {
   return {
-    type: actionConstants.NETWORK_DROPDOWN_OPEN,
+    type: actionConstants.SETTINGS_DROPDOWN_OPEN,
   };
 }
 
-export function hideNetworkDropdown() {
+export function hideSettingsDropdown() {
   return {
-    type: actionConstants.NETWORK_DROPDOWN_CLOSE,
+    type: actionConstants.SETTINGS_DROPDOWN_CLOSE,
   };
 }
 

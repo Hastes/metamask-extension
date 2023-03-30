@@ -19,7 +19,7 @@
     "alertOpen": false,
     "alertMessage": null,
     "qrCodeData": null,
-    "networkDropdownOpen": false,
+    "settingsDropdownOpen": false,
     "currentView": {
       "name": "confTx",
       "context": 0

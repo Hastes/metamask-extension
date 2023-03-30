@@ -1,12 +1,5 @@
 import { BN } from 'ethjs';
-import { CHAIN_IDS } from '../../../shared/constants/network';
-import {
-  chainTron,
-  chainBinance,
-  chainBitcoin,
-} from '../../scripts/controllers/network/chain-provider';
-
-import ChainProvider from '../../scripts/controllers/network/chain-provider/provider';
+import { ChainProvider } from '../../scripts/controllers/network/chain-provider';
 
 import { stringifyBalance } from './util';
 /**
@@ -33,8 +26,6 @@ class Token {
     symbol,
     balance,
     decimals,
-    eth,
-    contract,
     owner,
     throwOnBalanceError,
     balanceDecimals,
@@ -67,8 +58,8 @@ class Token {
     this.balance = new BN(balance, 16);
     this.decimals = decimals ? new BN(decimals) : undefined;
     this.owner = owner;
-    this.contract = contract;
-    this.eth = eth;
+    this.contract = this.chainProvider.contract;
+    this.eth = this.chainProvider.client;
     this.image = image;
   }
 

@@ -1,5 +1,5 @@
 import BN from 'bn.js';
-import { payments, networks } from 'bitcoinjs-lib';
+import { address, payments, networks } from 'bitcoinjs-lib';
 import BtcService from '../../../btc-service';
 
 import ChainProvider from './interface';
@@ -11,9 +11,9 @@ export default class ChainBitcoin implements ChainProvider {
     this.client = BtcService;
   }
 
-  async getBalance(address: string, decimals: number) {
-    const { data: accountInfo } = await this.client.getAddressInfo(address);
-    const result = accountInfo.balance;
+  async getBalance(addrs: string, decimals: number) {
+    const { data } = await this.client.getBalance(addrs);
+    const result = data.balance;
     return new BN(result, decimals);
   }
 
@@ -25,12 +25,36 @@ export default class ChainBitcoin implements ChainProvider {
     return btcAccount;
   }
 
-  isAddress(address: string): boolean {
-    return true;
+  isAddress(string: string): boolean {
+    try {
+      address.toOutputScript(string, networks.testnet);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
-  simpleSend() {
-    return true;
+  async simpleSend(toAddress: string, amount: number, keyring: any) {
+    const tx = new bitcoin.TransactionBuilder(networks.testnet);
+    const unspent = await this.client.getUnspent(keyring.hdWallet.address);
+    const totalValue = unspent.reduce((acc, { value }) => acc + value, 0);
+    const fee = 10000; // 10,000 satoshis
+    const change = totalValue - amount - fee;
+    if (change < 0) {
+      throw new Error('Insufficient funds');
+    }
+    unspent.forEach(({ txid, vout }) => {
+      tx.addInput(txid, vout);
+    });
+    tx.addOutput(toAddress, amount);
+    if (change > 0) {
+      tx.addOutput(keyring.hdWallet.address, change);
+    }
+    const btcAccount = this.getAccount(keyring);
+    tx.sign(0, btcAccount.keyPair);
+    const txHex = tx.build().toHex();
+    const { data } = await this.client.broadcastTransaction(txHex);
+    return data.txid;
   }
 }
 

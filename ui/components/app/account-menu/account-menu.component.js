@@ -417,7 +417,6 @@ export default class AccountMenu extends Component {
           }
           text={t('connectHardwareWallet')}
         />
-        <div className="account-menu__divider" />
         {
           ///: BEGIN:ONLY_INCLUDE_IN(flask)
           <>
@@ -442,52 +441,6 @@ export default class AccountMenu extends Component {
           </>
           ///: END:ONLY_INCLUDE_IN
         }
-        <AccountMenuItem
-          onClick={() => {
-            trackEvent(
-              {
-                category: EVENT.CATEGORIES.NAVIGATION,
-                event: EVENT_NAMES.SUPPORT_LINK_CLICKED,
-                properties: {
-                  url: supportLink,
-                },
-              },
-              {
-                contextPropsIntoEventProperties: [CONTEXT_PROPS.PAGE_TITLE],
-              },
-            );
-            global.platform.openTab({ url: supportLink });
-          }}
-          icon={
-            <Icon
-              name={ICON_NAMES.MESSAGES}
-              color={IconColor.iconAlternative}
-            />
-          }
-          text={supportText}
-        />
-
-        <AccountMenuItem
-          onClick={() => {
-            toggleAccountMenu();
-            history.push(SETTINGS_ROUTE);
-            this.context.trackEvent({
-              category: EVENT.CATEGORIES.NAVIGATION,
-              event: EVENT_NAMES.NAV_SETTINGS_OPENED,
-              properties: {
-                location: 'Main Menu',
-              },
-            });
-          }}
-          icon={
-            <Icon
-              name={ICON_NAMES.SETTING}
-              color={IconColor.iconAlternative}
-              ariaLabel={t('settings')}
-            />
-          }
-          text={t('settings')}
-        />
       </div>
     );
   }

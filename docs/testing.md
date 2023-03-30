@@ -73,7 +73,7 @@ const generateGasEstimatorProps = (overrides) => ({
 });
 
 const generateAppState = (overrides) => ({
-  networkDropdownOpen: false,
+  settingsDropdownOpen: false,
   gasIsLoading: false,
   isLoading: false,
   modal: {

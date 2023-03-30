@@ -70,7 +70,7 @@ export default class SendContent extends Component {
     const showKnownRecipientWarning =
       recipient.warning === 'knownAddressRecipient';
 
-    const isTrx20 = asset.details.provider.type === NETWORK_TYPES.TRON;
+    const isTrc20 = asset.details.provider.type === NETWORK_TYPES.TRON;
 
     return (
       <PageContainerContent>
@@ -79,16 +79,16 @@ export default class SendContent extends Component {
           {isEthGasPrice
             ? this.renderWarning(ETH_GAS_PRICE_FETCH_WARNING_KEY)
             : null}
-          {error ? this.renderError(error) : null}
+          {error ? thisp.renderError(error) : null}
           {warning ? this.renderWarning() : null}
           {showKnownRecipientWarning && !recipientWarningAcknowledged
             ? this.renderRecipientWarning()
             : null}
           <SendAssetRow />
           <SendAmountRow />
-          {networkOrAccountNotSupports1559 && !isTrx20 ? <SendGasRow /> : null}
+          {networkOrAccountNotSupports1559 && !isTrc20 ? <SendGasRow /> : null}
           {showHexData ? <SendHexDataRow /> : null}
-          {isTrx20 ? null : <GasDisplay gasError={gasError} />}
+          {isTrc20 ? null : <GasDisplay gasError={gasError} />}
         </div>
       </PageContainerContent>
     );

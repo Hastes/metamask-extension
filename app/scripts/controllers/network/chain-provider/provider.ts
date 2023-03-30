@@ -8,7 +8,7 @@ import ChainTron from './chain-tron';
 import ChainBitcoin from './chain-bitcoin';
 import ChainEth from './chain-eth';
 
-export default class Provider {
+export class ChainProvider {
   readonly chain: ChainBinance | ChainBitcoin | ChainTron | ChainEth | null =
     null;
 
@@ -43,14 +43,14 @@ export default class Provider {
     if (!this.chain) {
       throw new Error('Not implemented network type');
     }
-    this.chain.getAccount(keyring);
+    return this.chain.getAccount(keyring);
   }
 
   isAddress(address: string) {
     if (!this.chain) {
       throw new Error('Not implemented network type');
     }
-    this.chain.isAddress(address);
+    return this.chain.isAddress(address);
   }
 
   async simpleSend(keyring: typeof HdKeyring, to: string, amount: string) {
@@ -58,6 +58,6 @@ export default class Provider {
       throw new Error('Not implemented network type');
     }
 
-    this.chain.simpleSend(keyring, to, amount);
+    return this.chain.simpleSend(keyring, to, amount);
   }
 }

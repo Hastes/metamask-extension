@@ -31,7 +31,7 @@ describe('Network Dropdown', () => {
         },
       },
       appState: {
-        networkDropdownOpen: false,
+        settingsDropdownOpen: false,
       },
     };
 
@@ -76,7 +76,7 @@ describe('Network Dropdown', () => {
         },
       },
       appState: {
-        networkDropdownOpen: true,
+        settingsDropdownOpen: true,
       },
     };
 
@@ -150,7 +150,7 @@ describe('Network Dropdown', () => {
         },
       },
       appState: {
-        networkDropdownOpen: true,
+        settingsDropdownOpen: true,
       },
     };
 

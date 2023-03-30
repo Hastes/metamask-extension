@@ -44,7 +44,6 @@ export default function TokenCell({
         'token-cell--outdated': Boolean(balanceError),
       })}
       iconClassName="token-cell__icon"
-      onClick={onClick.bind(null, owner)}
       tokenProvider={provider}
       tokenContract={contract}
       tokenBalance={balance}
@@ -70,7 +69,7 @@ TokenCell.propTypes = {
   symbol: PropTypes.string,
   decimals: PropTypes.number,
   string: PropTypes.string,
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   isERC721: PropTypes.bool,
 };
 
@@ -79,4 +78,5 @@ TokenCell.defaultProps = {
   contract: null,
   image: null,
   provider: null,
+  onClick: null,
 };

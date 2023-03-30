@@ -801,6 +801,7 @@ export default class TransactionController extends EventEmitter {
         `TransactionController - invalid transactionType value: ${transactionType}`,
       );
     }
+    // debugger;
 
     // If a transaction is found with the same actionId, do not create a new speed-up transaction.
     if (actionId) {
@@ -819,7 +820,7 @@ export default class TransactionController extends EventEmitter {
 
     txUtils.validateTxParams(normalizedTxParams, eip1559Compatibility);
 
-    const isTrx20 =
+    const isTrc20 =
       normalizedTxParams.assetDetails?.provider.type === NETWORK_TYPES.TRON;
 
     /**
@@ -833,7 +834,7 @@ export default class TransactionController extends EventEmitter {
       origin,
       sendFlowHistory,
       chainId: normalizedTxParams.assetDetails?.provider.chainId,
-      isTrx20,
+      isTrc20,
     });
 
     // Add actionId to txMeta to check if same actionId is seen again
@@ -841,6 +842,11 @@ export default class TransactionController extends EventEmitter {
     if (actionId) {
       txMeta.actionId = actionId;
     }
+
+    // ensure value
+    txMeta.txParams.value = txMeta.txParams.value
+      ? addHexPrefix(txMeta.txParams.value)
+      : '0x0';
 
     // if (origin === ORIGIN_METAMASK) {
     //   // Assert the from address is the selected address
@@ -863,7 +869,7 @@ export default class TransactionController extends EventEmitter {
     //   }
     // }
     txMeta.type = transactionType;
-    if (!isTrx20) {
+    if (!isTrc20) {
       const { type } = await determineTransactionType(
         normalizedTxParams,
         this.query,
@@ -871,11 +877,6 @@ export default class TransactionController extends EventEmitter {
       if (type) {
         txMeta.type = type;
       }
-
-      // ensure value
-      txMeta.txParams.value = txMeta.txParams.value
-        ? addHexPrefix(txMeta.txParams.value)
-        : '0x0';
 
       if (txMethodType && this.securityProviderRequest) {
         const securityProviderResponse = await this.securityProviderRequest(
@@ -890,7 +891,7 @@ export default class TransactionController extends EventEmitter {
     this.addTransaction(txMeta);
     this.emit('newUnapprovedTx', txMeta);
 
-    if (!isTrx20) {
+    if (!isTrc20) {
       txMeta = await this.addTransactionGasDefaults(txMeta);
     }
 
@@ -1386,7 +1387,7 @@ export default class TransactionController extends EventEmitter {
       let { customNonceValue } = txMeta;
       customNonceValue = Number(customNonceValue);
 
-      if (txMeta.isTrx20) {
+      if (txMeta.isTrc20) {
         const currentAddress = this.getSelectedAddress();
         const keyring = await this.keyringController.getKeyringForAccount(
           currentAddress,

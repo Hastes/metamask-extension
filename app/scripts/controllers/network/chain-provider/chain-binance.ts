@@ -5,8 +5,8 @@ import { BncClient } from '@binance-chain/javascript-sdk';
 import ChainProvider from './interface';
 
 const HOST = {
-  mainnet: 'https://api.trongrid.io',
-  testnet: 'https://testnet-dex.binance.org/',
+  mainnet: 'https://dex.binance.org',
+  testnet: 'https://testnet-dex.binance.org',
 };
 
 export default class ChainBinance implements ChainProvider {
@@ -27,7 +27,7 @@ export default class ChainBinance implements ChainProvider {
   }
 
   async getAccount(
-    keyring: HdKeyring,
+    keyring: typeof HdKeyring,
   ): Promise<{ address: string; privateKey: string }> {
     const mnemonic = await keyring
       .serialize()

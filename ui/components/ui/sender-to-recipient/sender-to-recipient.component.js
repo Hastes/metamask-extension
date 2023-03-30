@@ -224,8 +224,8 @@ export default function SenderToRecipient({
   recipientIsOwnedAccount,
 }) {
   const t = useI18nContext();
-  const checksummedSenderAddress = toChecksumHexAddress(senderAddress);
-  const checksummedRecipientAddress = toChecksumHexAddress(recipientAddress);
+  const checksummedSenderAddress = senderAddress;
+  const checksummedRecipientAddress = recipientAddress;
 
   return (
     <div

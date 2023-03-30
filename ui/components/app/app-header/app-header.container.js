@@ -15,7 +15,7 @@ import AppHeader from './app-header.component';
 
 const mapStateToProps = (state) => {
   const { appState, metamask } = state;
-  const { networkDropdownOpen } = appState;
+  const { settingsDropdownOpen } = appState;
   const {
     selectedAddress,
     isUnlocked,
@@ -34,7 +34,7 @@ const mapStateToProps = (state) => {
   ///: END:ONLY_INCLUDE_IN
 
   return {
-    networkDropdownOpen,
+    settingsDropdownOpen,
     selectedAddress,
     isUnlocked,
     isAccountMenuOpen,
@@ -50,8 +50,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    showNetworkDropdown: () => dispatch(actions.showNetworkDropdown()),
-    hideNetworkDropdown: () => dispatch(actions.hideNetworkDropdown()),
+    showSettingsDropdown: () => dispatch(actions.showSettingsDropdown()),
+    hideSettingsDropdown: () => dispatch(actions.hideSettingsDropdown()),
     toggleAccountMenu: () => dispatch(actions.toggleAccountMenu()),
   };
 };

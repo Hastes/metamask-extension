@@ -42,26 +42,13 @@ export default function ImportSRP({ submitSecretRecoveryPhrase }) {
         marginBottom={4}
       />
       <div className="import-srp__header">
-        <Typography
-          variant={TypographyVariant.H2}
-          fontWeight={FONT_WEIGHT.BOLD}
-        >
+        <Typography variant={TypographyVariant.H3}>
           {t('accessYourWalletWithSRP')}
         </Typography>
       </div>
       <div className="import-srp__description">
         <Typography variant={TypographyVariant.H4}>
-          {t('accessYourWalletWithSRPDescription', [
-            <a
-              key="learnMore"
-              type="link"
-              href={ZENDESK_URLS.SECRET_RECOVERY_PHRASE}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('learnMoreUpperCase')}
-            </a>,
-          ])}
+          {t('accessYourWalletWithSRPDescription')}
         </Typography>
       </div>
       <div className="import-srp__actions">

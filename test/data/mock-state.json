@@ -3,7 +3,7 @@
     "resolution": null
   },
   "appState": {
-    "networkDropdownOpen": false,
+    "settingsDropdownOpen": false,
     "gasIsLoading": false,
     "isLoading": false,
     "modal": {

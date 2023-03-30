@@ -159,11 +159,6 @@ export default class UnlockPage extends Component {
       <div className="unlock-page__container">
         <div className="unlock-page" data-testid="unlock-page">
           <div className="unlock-page__mascot-container">
-            <Mascot
-              animationEventEmitter={this.animationEventEmitter}
-              width="120"
-              height="120"
-            />
             {isBeta() ? (
               <div className="unlock-page__mascot-container__beta">
                 {t('beta')}

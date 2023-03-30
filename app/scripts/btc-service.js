@@ -1,51 +1,19 @@
-const BTC_TESTNET_BLOCKCHAIN = 'https://api.blockchair.com/bitcoin/testnet/';
-
-// const fakeAddressResponse = {
-//   mnVC8THGotp5J3JuStXr6BZo3Uzc59L9km: {
-//     address: {
-//       type: 'pubkeyhash',
-//       script_hex: '76a9144c7398d565af26b5a253204e83564ac9e7d3c2aa88ac',
-//       balance: 1962078,
-//       balance_usd: 0,
-//       received: 1962078,
-//       received_usd: 0,
-//       spent: 0,
-//       spent_usd: 0,
-//       output_count: 2,
-//       unspent_output_count: 2,
-//       first_seen_receiving: '2023-02-06 14:39:32',
-//       last_seen_receiving: '2023-02-06 15:19:07',
-//       first_seen_spending: null,
-//       last_seen_spending: null,
-//       scripthash_type: null,
-//       transaction_count: 2,
-//     },
-//     transactions: [
-//       '7100a52d4d3cdbd93ebbbccad5524371c04a98e91b9a8c50d692ddeaf9d02eea',
-//       '1f8fddc96c0021a11e2ce236b875f729fab423c5555c17628a797078f1c3a995',
-//     ],
-//     utxo: [
-//       {
-//         block_id: 2419109,
-//         transaction_hash:
-//           '7100a52d4d3cdbd93ebbbccad5524371c04a98e91b9a8c50d692ddeaf9d02eea',
-//         index: 0,
-//         value: 13590,
-//       },
-//       {
-//         block_id: 2419106,
-//         transaction_hash:
-//           '1f8fddc96c0021a11e2ce236b875f729fab423c5555c17628a797078f1c3a995',
-//         index: 1,
-//         value: 1948488,
-//       },
-//     ],
-//   },
-// };
+const BTC_TESTNET_BLOCKCHAIN = 'https://testnet.blockcypher.com/v1/btc/test3/';
 
 class BtcServiceApi {
   constructor(url) {
     this.apiBaseUrl = url;
+  }
+
+  static async getUnspent(address) {
+    const url = `https://api.blockcypher.com/v1/btc/test3/addrs/${address}/unspent`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.map(({ tx_hash, tx_output_n, value }) => ({
+      txid: tx_hash,
+      vout: tx_output_n,
+      value: value,
+    }));
   }
 
   async get(url) {
@@ -73,8 +41,18 @@ class BtcServiceApi {
    * @returns {Promise} fetch response
    */
   async getAddressInfo(address) {
-    // return Promise.resolve(fakeAddressResponse);
-    const result = await this.get(`dashboards/address/${address}`);
+    const result = await this.get(`addrs/${address}`);
+    return result;
+  }
+
+  /**
+   * get balance
+   *
+   * @param {string} address - account address
+   * @returns {Promise} fetch response
+   */
+  async getBalance(address) {
+    const result = await this.get(`addrs/${address}/balance`);
     return result;
   }
 

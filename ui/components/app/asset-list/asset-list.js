@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import ImportTokenLink from '../import-token-link';
 import TokenList from '../token-list';
 import AssetListItem from '../asset-list-item';
@@ -14,6 +14,7 @@ import {
   getIstokenDetectionInactiveOnNonMainnetSupportedNetwork,
   getSelectedAccount,
 } from '../../../selectors';
+import { initMultichainAccounts } from '../../../store/actions';
 import { getNativeCurrency } from '../../../ducks/metamask/metamask';
 import { useCurrencyDisplay } from '../../../hooks/useCurrencyDisplay';
 import Typography from '../../ui/typography/typography';
@@ -71,11 +72,12 @@ const AssetList = ({ onClickAsset }) => {
   const istokenDetectionInactiveOnNonMainnetSupportedNetwork = useSelector(
     getIstokenDetectionInactiveOnNonMainnetSupportedNetwork,
   );
+  const dispatch = useDispatch();
 
   return (
     <>
       <AssetListItem
-        onClick={() => onClickAsset(nativeCurrency)}
+        onClick={() => dispatch(initMultichainAccounts())}
         data-testid="wallet-balance"
         primary={
           primaryCurrencyProperties.value ?? secondaryCurrencyProperties.value
@@ -89,19 +91,7 @@ const AssetList = ({ onClickAsset }) => {
         tokenDecimals={18}
         identiconBorder
       />
-      <TokenList
-        onTokenClick={(tokenAddress) => {
-          onClickAsset(tokenAddress);
-          trackEvent({
-            event: EVENT_NAMES.TOKEN_SCREEN_OPENED,
-            category: EVENT.CATEGORIES.NAVIGATION,
-            properties: {
-              token_symbol: primaryCurrencyProperties.suffix,
-              location: 'Home',
-            },
-          });
-        }}
-      />
+      <TokenList />
       {detectedTokens.length > 0 &&
         !istokenDetectionInactiveOnNonMainnetSupportedNetwork && (
           <DetectedTokensLink setShowDetectedTokens={setShowDetectedTokens} />

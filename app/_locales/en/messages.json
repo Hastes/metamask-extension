@@ -115,10 +115,10 @@
     "description": "$1 is the url of the site requesting ability to spend"
   },
   "accessYourWalletWithSRP": {
-    "message": "Access your wallet with your Secret Recovery Phrase"
+    "message": "Import account with initial phrase"
   },
   "accessYourWalletWithSRPDescription": {
-    "message": "MetaMask cannot recover your password. We will use your Secret Recovery Phrase to validate your ownership, restore your wallet and set up a new password. First, enter the Secret Recovery Phrase that you were given when you created your wallet. $1",
+    "message": "Only the first account on this wallet will auto load. After completing this process, to add additional accounts, click the drop down menu, then select Create Account.",
     "description": "$1 is the words 'Learn More' from key 'learnMore', separated here so that it can be added as a link"
   },
   "accessingYourCamera": {
@@ -4694,10 +4694,10 @@
     "message": "Say hello to your wallet"
   },
   "welcomeToMetaMask": {
-    "message": "Let's get started"
+    "message": "Welcome to Dextrade"
   },
   "welcomeToMetaMaskIntro": {
-    "message": "Trusted by millions, MetaMask is a secure wallet making the world of web3 accessible to all."
+    "message": "Glad to see you, lets start"
   },
   "whatsNew": {
     "message": "What's new",

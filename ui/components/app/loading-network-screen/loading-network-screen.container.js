@@ -40,7 +40,7 @@ const mapDispatchToProps = (dispatch) => {
     },
     rollbackToPreviousProvider: () =>
       dispatch(actions.rollbackToPreviousProvider()),
-    showNetworkDropdown: () => dispatch(actions.showNetworkDropdown()),
+    showSettingsDropdown: () => dispatch(actions.showSettingsDropdown()),
   };
 };
 

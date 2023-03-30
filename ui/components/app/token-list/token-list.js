@@ -23,21 +23,21 @@ export default function TokenList({ onTokenClick }) {
     true,
     shouldHideZeroBalanceTokens,
   );
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          height: '250px',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '30px',
-        }}
-      >
-        {t('loadingTokens')}
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div
+  //       style={{
+  //         display: 'flex',
+  //         height: '250px',
+  //         alignItems: 'center',
+  //         justifyContent: 'center',
+  //         padding: '30px',
+  //       }}
+  //     >
+  //       {t('loadingTokens')}
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>
@@ -48,6 +48,9 @@ export default function TokenList({ onTokenClick }) {
   );
 }
 
+TokenList.defaultProps = {
+  onTokenClick: undefined,
+};
 TokenList.propTypes = {
-  onTokenClick: PropTypes.func.isRequired,
+  onTokenClick: PropTypes.func,
 };
