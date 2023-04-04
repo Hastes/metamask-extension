@@ -1,8 +1,9 @@
 import BN from 'bn.js';
 import EthQuery from 'ethjs-query';
 import EthContract from 'ethjs-contract';
-import HdKeyring from '@metamask/eth-hd-keyring';
+import { publicToAddress, arrToBufArr, addHexPrefix } from 'ethereumjs-util';
 import abi from 'human-standard-token-abi';
+import { HDKey } from 'ethereum-cryptography/hdkey';
 import { getProvider } from '../provider-api-tests/helpers';
 import {
   isBurnAddress,
@@ -16,6 +17,12 @@ export default class ChainEth implements ChainProvider {
   client: typeof EthQuery;
 
   contract?: typeof EthContract = null;
+
+  defaultSymbol = 'ETH';
+
+  defaultDecimals = 18;
+
+  defaultIconUrl = '';
 
   constructor(provider: ProviderConfig) {
     const buildedProvider = getProvider({
@@ -41,11 +48,16 @@ export default class ChainEth implements ChainProvider {
     return new BN(result, decimals);
   }
 
-  async getAccount(keyring: HdKeyring) {
-    // not implemented
+  getAccount(hdKey: HDKey) {
+    if (!hdKey.publicKey) {
+      throw new Error('No public key');
+    }
+    const pubKey = arrToBufArr(hdKey.publicKey);
+    const address = publicToAddress(pubKey, true).toString('hex');
+    return { address: addHexPrefix(address) };
   }
 
-  async simpleSend(keyring: HdKeyring, to: string, amount: string) {
+  async simpleSend(hdKey: HDKey, to: string, amount: string) {
     // not implemented
   }
 
@@ -56,10 +68,10 @@ export default class ChainEth implements ChainProvider {
    */
   isAddress(address: string): boolean {
     const isAddress =
-      !isBurnAddress(address) &&
-      isValidHexAddress(address, {
-        mixedCaseUseChecksum: true,
-      });
+      !isBurnAddress(address);
+      // isValidHexAddress(address, {
+      //   mixedCaseUseChecksum: true,
+      // });
     return isAddress;
   }
 }

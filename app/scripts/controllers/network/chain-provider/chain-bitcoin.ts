@@ -1,11 +1,20 @@
 import BN from 'bn.js';
 import { address, payments, networks } from 'bitcoinjs-lib';
+import { arrToBufArr } from 'ethereumjs-util';
+import { HDKey } from 'ethereum-cryptography/hdkey';
 import BtcService from '../../../btc-service';
 
 import ChainProvider from './interface';
 
 export default class ChainBitcoin implements ChainProvider {
   client: any;
+
+  defaultSymbol = 'BTC';
+
+  defaultDecimals = 9;
+
+  defaultIconUrl =
+    'https://www.citypng.com/public/uploads/preview/-51614559661pdiz2gx0zn.png';
 
   constructor() {
     this.client = BtcService;
@@ -17,9 +26,12 @@ export default class ChainBitcoin implements ChainProvider {
     return new BN(result, decimals);
   }
 
-  getAccount(keyring: any) {
+  getAccount(hdKey: HDKey) {
+    if (!hdKey.publicKey) {
+      throw new Error('No public key');
+    }
     const btcAccount = payments.p2pkh({
-      pubkey: Buffer.from(keyring.hdWallet.pubKey),
+      pubkey: arrToBufArr(hdKey.publicKey),
       network: networks.testnet,
     });
     return btcAccount;
@@ -34,7 +46,7 @@ export default class ChainBitcoin implements ChainProvider {
     }
   }
 
-  async simpleSend(toAddress: string, amount: number, keyring: any) {
+  async simpleSend(keyring: any, toAddress: string, amount: number) {
     const tx = new bitcoin.TransactionBuilder(networks.testnet);
     const unspent = await this.client.getUnspent(keyring.hdWallet.address);
     const totalValue = unspent.reduce((acc, { value }) => acc + value, 0);

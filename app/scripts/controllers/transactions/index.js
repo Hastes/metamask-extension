@@ -1392,8 +1392,11 @@ export default class TransactionController extends EventEmitter {
         const keyring = await this.keyringController.getKeyringForAccount(
           currentAddress,
         );
+        const addressIdx = keyring.getAccounts().indexOf(currentAddress);
+        const { root } = keyring;
+        const hdKey = root.deriveChild(addressIdx);
 
-        await chainTron.simpleSend(keyring, toAddress, txMeta.txParams.value);
+        await chainTron.simpleSend(hdKey, toAddress, txMeta.txParams.value);
 
         this.txStateManager.setTxStatusSubmitted(txId);
         this._trackTransactionMetricsEvent(

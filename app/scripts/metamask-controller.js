@@ -177,15 +177,6 @@ import {
 import createRPCMethodTrackingMiddleware from './lib/createRPCMethodTrackingMiddleware';
 import { securityProviderCheck } from './lib/security-provider-helpers';
 
-import bitcore from 'bitcore-lib';
-
-import {
-  chainBinance,
-  chainBitcoin,
-  chainTron,
-} from './controllers/network/chain-provider';
-import BtcService from './btc-service';
-
 export const METAMASK_CONTROLLER_EVENTS = {
   // Fired after state changes that impact the extension badge (unapproved msg count)
   // The process of updating the badge happens in app/scripts/background.js.
@@ -306,24 +297,6 @@ export default class MetamaskController extends EventEmitter {
       network: this.networkController,
       tokenListController: this.tokenListController,
       provider: this.provider,
-    });
-
-    this.tokensController = new TokensController({
-      onPreferencesStateChange: this.preferencesController.store.subscribe.bind(
-        this.preferencesController.store,
-      ),
-      onNetworkStateChange: (cb) =>
-        this.networkController.store.subscribe((networkState) => {
-          const modifiedNetworkState = {
-            ...networkState,
-            providerConfig: {
-              ...networkState.provider,
-            },
-          };
-          return cb(modifiedNetworkState);
-        }),
-      config: { provider: this.provider },
-      state: initState.TokensController,
     });
 
     this.assetsContractController = new AssetsContractController(
@@ -539,34 +512,6 @@ export default class MetamaskController extends EventEmitter {
       initState.AnnouncementController,
     );
 
-    // token exchange rate tracker
-    this.tokenRatesController = new TokenRatesController(
-      {
-        onTokensStateChange: (listener) =>
-          this.tokensController.subscribe(listener),
-        onCurrencyRateStateChange: (listener) =>
-          this.controllerMessenger.subscribe(
-            `${this.currencyRateController.name}:stateChange`,
-            listener,
-          ),
-        onNetworkStateChange: (cb) =>
-          this.networkController.store.subscribe((networkState) => {
-            const modifiedNetworkState = {
-              ...networkState,
-              providerConfig: {
-                ...networkState.provider,
-                chainId: hexToDecimal(networkState.provider.chainId),
-              },
-            };
-            return cb(modifiedNetworkState);
-          }),
-      },
-      {
-        disabled:
-          !this.preferencesController.store.getState().useCurrencyRateCheck,
-      },
-      initState.TokenRatesController,
-    );
     this.preferencesController.store.subscribe(
       previousValueComparator((prevState, currState) => {
         const { useCurrencyRateCheck: prevUseCurrencyRateCheck } = prevState;
@@ -655,10 +600,6 @@ export default class MetamaskController extends EventEmitter {
       initState: initState.CachedBalancesController,
     });
 
-    this.tokensController.hub.on('pendingSuggestedAsset', async () => {
-      await opts.openPopup();
-    });
-
     let additionalKeyrings = [keyringBuilderFactory(QRHardwareKeyring)];
 
     if (this.canUseHardwareWallets()) {
@@ -687,6 +628,48 @@ export default class MetamaskController extends EventEmitter {
     );
     this.keyringController.on('unlock', () => this._onUnlock());
     this.keyringController.on('lock', () => this._onLock());
+
+    this.tokensController = new TokensController({
+      keyringController: this.keyringController,
+      onPreferencesStateChange: this.preferencesController.store.subscribe.bind(
+        this.preferencesController.store,
+      ),
+      // config: { provider: this.provider },
+      state: initState.TokensController,
+    });
+
+    this.tokensController.hub.on('pendingSuggestedAsset', async () => {
+      await opts.openPopup();
+    });
+
+    // token exchange rate tracker
+    this.tokenRatesController = new TokenRatesController(
+      {
+        onTokensStateChange: (listener) =>
+          this.tokensController.subscribe(listener),
+        onCurrencyRateStateChange: (listener) =>
+          this.controllerMessenger.subscribe(
+            `${this.currencyRateController.name}:stateChange`,
+            listener,
+          ),
+        onNetworkStateChange: (cb) =>
+          this.networkController.store.subscribe((networkState) => {
+            const modifiedNetworkState = {
+              ...networkState,
+              providerConfig: {
+                ...networkState.provider,
+                chainId: hexToDecimal(networkState.provider.chainId),
+              },
+            };
+            return cb(modifiedNetworkState);
+          }),
+      },
+      {
+        disabled:
+          !this.preferencesController.store.getState().useCurrencyRateCheck,
+      },
+      initState.TokenRatesController,
+    );
 
     const getIdentities = () =>
       this.preferencesController.store.getState().identities;
@@ -4425,17 +4408,34 @@ export default class MetamaskController extends EventEmitter {
   }
 
   async initAccounts() {
-    const currentAddress = this.preferencesController.getSelectedAddress();
-    const keyring = await this.keyringController.getKeyringForAccount(
-      currentAddress,
+    const providers = [
+      {
+        chainId: CHAIN_IDS.BTC,
+        type: NETWORK_TYPES.BITCOIN,
+        rpcUrl: null,
+      },
+      {
+        chainId: CHAIN_IDS.BINANCE_CHAIN,
+        type: NETWORK_TYPES.BINANCE_CHAIN,
+        rpcUrl: null,
+      },
+      {
+        chainId: CHAIN_IDS.BSC_TESTNET,
+        type: NETWORK_TYPES.RPC,
+        rpcUrl: 'https://data-seed-prebsc-2-s2.binance.org:8545',
+        symbol: 'tBNB',
+      },
+      {
+        chainId: CHAIN_IDS.TRON,
+        type: NETWORK_TYPES.TRON,
+        rpcUrl: null,
+      },
+    ];
+
+    const tokens = await Promise.all(
+      providers.map((p) => this.tokensController.addToken(p)),
     );
 
-    const accounts = {};
-
-    accounts.btcAccount = chainBitcoin.getAccount(keyring);
-    accounts.tronAccount = await chainTron.getAccount(keyring);
-    accounts.bscAccount = await chainBinance.getAccount(keyring);
-
-    return accounts;
+    return tokens;
   }
 }

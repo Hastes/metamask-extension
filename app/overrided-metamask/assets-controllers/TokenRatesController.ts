@@ -40,13 +40,11 @@ export interface CoinGeckoPlatform {
  * @type Token
  *
  * Token representation
- * @property contract - Hex address of the token contract
  * @property decimals - Number of decimals the token uses
  * @property symbol - Symbol of the token
  * @property image - Image of the token, url or bit32 image
  */
 export interface Token {
-  contract?: string;
   decimals: number;
   symbol: string;
   aggregators?: string[];

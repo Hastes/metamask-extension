@@ -1,34 +1,24 @@
 import { EventEmitter } from 'events';
-import contractsMap from '@metamask/contract-metadata';
-import { abiERC721 } from '@metamask/metamask-eth-abis';
+import { isEqual } from 'lodash';
 import { v1 as random } from 'uuid';
 import { Mutex } from 'async-mutex';
 import { Contract } from '@ethersproject/contracts';
-import { Web3Provider } from '@ethersproject/providers';
+
 import {
   BaseController,
   BaseConfig,
   BaseState,
 } from '@metamask/base-controller';
 import type { PreferencesState } from '@metamask/preferences-controller';
-import type { NetworkState } from '@metamask/network-controller';
+
+import { toChecksumHexAddress } from '@metamask/controller-utils';
+import { KeyringController } from '@metamask/eth-keyring-controller';
 import {
-  NetworkType,
-  toChecksumHexAddress,
-  MAINNET,
-  ERC721_INTERFACE_ID,
-} from '@metamask/controller-utils';
+  ProviderConfig,
+  ChainProvider,
+} from '../../scripts/controllers/network/chain-provider';
 import type { Token } from './TokenRatesController';
-import { TokenListToken } from './TokenListController';
-import {
-  formatAggregatorNames,
-  formatIconUrlWithProxy,
-  validateTokenToWatch,
-} from './assetsUtil';
-import {
-  fetchTokenMetadata,
-  TOKEN_METADATA_NO_SUPPORT_ERROR,
-} from './token-service';
+import { formatAggregatorNames, validateTokenToWatch } from './assetsUtil';
 
 /**
  * @type TokensConfig
@@ -38,10 +28,7 @@ import {
  * @property selectedAddress - Vault selected address
  */
 export interface TokensConfig extends BaseConfig {
-  networkType: NetworkType;
   selectedAddress: string;
-  chainId: string;
-  provider: any;
 }
 
 /**
@@ -95,11 +82,11 @@ export type SuggestedAssetMeta =
  * @type TokensState
  *
  * Assets controller state
- * @property tokens - List of tokens associated with the active network and address pair
- * @property ignoredTokens - List of ignoredTokens associated with the active network and address pair
- * @property detectedTokens - List of detected tokens associated with the active network and address pair
- * @property allTokens - Object containing tokens by network and account
- * @property allIgnoredTokens - Object containing hidden/ignored tokens by network and account
+ * @property tokens - List of tokens associated with  address pair
+ * @property ignoredTokens - List of ignoredTokens associated with  address pair
+ * @property detectedTokens - List of detected tokens associated with  address pair
+ * @property allTokens - Object containing tokens by account
+ * @property allIgnoredTokens - Object containing hidden/ignored tokens by account
  * @property allDetectedTokens - Object containing tokens detected with non-zero balances
  * @property suggestedAssets - List of pending suggested assets to be added or canceled
  */
@@ -107,9 +94,9 @@ export interface TokensState extends BaseState {
   tokens: Token[];
   ignoredTokens: string[];
   detectedTokens: Token[];
-  allTokens: { [key: string]: { [key: string]: Token[] } };
-  allIgnoredTokens: { [key: string]: { [key: string]: string[] } };
-  allDetectedTokens: { [key: string]: { [key: string]: Token[] } };
+  allTokens: { [key: string]: Token[] };
+  allIgnoredTokens: { [key: string]: string[] };
+  allDetectedTokens: { [key: string]: Token[] };
   suggestedAssets: SuggestedAssetMeta[];
 }
 
@@ -125,6 +112,8 @@ export class TokensController extends BaseController<
   private ethersProvider: any;
 
   private abortController: AbortController;
+
+  private keyringController: any;
 
   private failSuggestedAsset(
     suggestedAssetMeta: SuggestedAssetMeta,
@@ -142,33 +131,6 @@ export class TokensController extends BaseController<
   }
 
   /**
-   * Fetch metadata for a token.
-   *
-   * @param tokenAddress - The address of the token.
-   * @returns The token metadata.
-   */
-  private async fetchTokenMetadata(
-    tokenAddress: string,
-  ): Promise<TokenListToken | undefined> {
-    try {
-      const token = await fetchTokenMetadata<TokenListToken>(
-        this.config.chainId,
-        tokenAddress,
-        this.abortController.signal,
-      );
-      return token;
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes(TOKEN_METADATA_NO_SUPPORT_ERROR)
-      ) {
-        return undefined;
-      }
-      throw error;
-    }
-  }
-
-  /**
    * EventEmitter instance used to listen to specific EIP747 events
    */
   hub = new EventEmitter();
@@ -183,32 +145,29 @@ export class TokensController extends BaseController<
    *
    * @param options - The controller options.
    * @param options.onPreferencesStateChange - Allows subscribing to preference controller state changes.
-   * @param options.onNetworkStateChange - Allows subscribing to network controller state changes.
    * @param options.config - Initial options used to configure this controller.
    * @param options.state - Initial state to set on this controller.
+   * @param options.keyringController
    */
   constructor({
+    keyringController,
     onPreferencesStateChange,
-    onNetworkStateChange,
     config,
     state,
   }: {
+    keyringController: KeyringController;
     onPreferencesStateChange: (
       listener: (preferencesState: PreferencesState) => void,
-    ) => void;
-    onNetworkStateChange: (
-      listener: (networkState: NetworkState) => void,
     ) => void;
     config?: Partial<TokensConfig>;
     state?: Partial<TokensState>;
   }) {
     super(config, state);
 
+    this.keyringController = keyringController;
+
     this.defaultConfig = {
-      networkType: MAINNET,
       selectedAddress: '',
-      chainId: '',
-      provider: undefined,
       ...config,
     };
 
@@ -228,89 +187,61 @@ export class TokensController extends BaseController<
 
     onPreferencesStateChange(({ selectedAddress }) => {
       const { allTokens, allIgnoredTokens, allDetectedTokens } = this.state;
-      const { chainId } = this.config;
       this.configure({ selectedAddress });
       this.update({
-        tokens: allTokens[chainId]?.[selectedAddress] || [],
-        ignoredTokens: allIgnoredTokens[chainId]?.[selectedAddress] || [],
-        detectedTokens: allDetectedTokens[chainId]?.[selectedAddress] || [],
-      });
-    });
-
-    onNetworkStateChange(({ providerConfig }) => {
-      const { allTokens, allIgnoredTokens, allDetectedTokens } = this.state;
-      const { selectedAddress } = this.config;
-      const { chainId } = providerConfig;
-      this.abortController.abort();
-      this.abortController = new AbortController();
-      this.configure({ chainId });
-      this.ethersProvider = this._instantiateNewEthersProvider();
-      this.update({
-        tokens: allTokens[chainId]?.[selectedAddress] || [],
-        ignoredTokens: allIgnoredTokens[chainId]?.[selectedAddress] || [],
-        detectedTokens: allDetectedTokens[chainId]?.[selectedAddress] || [],
+        tokens: allTokens[selectedAddress] || [],
+        ignoredTokens: allIgnoredTokens[selectedAddress] || [],
+        detectedTokens: allDetectedTokens[selectedAddress] || [],
       });
     });
   }
 
-  _instantiateNewEthersProvider(): any {
-    return new Web3Provider(this.config?.provider);
-  }
+  // _instantiateNewEthersProvider(): any {
+  //   return new Web3Provider(this.config?.provider);
+  // }
 
   /**
    * Adds a token to the stored token list.
    *
    * @param provider
-   * @param provider.chainId
-   * @param provider.type
-   * @param provider.rpcUrl
-   * @param account - Account address in chain.
-   * @param symbol - Symbol of the token.
-   * @param decimals - Number of decimals the token uses.
-   * @param image - Image of the token.
-   * @param contract - Hex address of the token contract.
    * @returns Current token list.
    */
-  async addToken(
-    provider: { chainId: string; type: string; rpcUrl?: string },
-    account: string,
-    symbol: string,
-    decimals: number,
-    image?: string,
-    contract?: string,
-  ): Promise<Token[]> {
+  async addToken(provider: ProviderConfig): Promise<Token[]> {
     const releaseLock = await this.mutex.acquire();
     try {
-      // address = toChecksumHexAddress(address);
-      const { tokens, ignoredTokens, detectedTokens } = this.state;
+      const { tokens, detectedTokens } = this.state;
       const newTokens: Token[] = [...tokens];
-      let isERC721 = false;
+
+      const cp = new ChainProvider(provider);
+      const keyring = await this.keyringController.getKeyringForAccount(
+        this.config.selectedAddress,
+      );
+
+      const addressIdx = keyring.getAccounts().indexOf(this.config.selectedAddress);
+      const { root } = keyring;
+      const hdKey = root.deriveChild(addressIdx);
+
+      const account = cp.getAccount(hdKey);
+
       let tokenMetadata;
-      if (contract) {
+      let isERC721;
+      if (provider.contract) {
         [isERC721, tokenMetadata] = await Promise.all([
-          this._detectIsERC721(contract),
-          this.fetchTokenMetadata(contract),
+          cp.detectIsERC721(),
+          cp.fetchTokenMetadata(),
         ]);
       }
       const newEntry: Token = {
-        contract,
-        account,
+        account: account.address,
         provider,
-        symbol,
-        decimals,
-        image:
-          image ||
-          formatIconUrlWithProxy({
-            chainId: provider.chainId,
-            tokenAddress: contract,
-          }),
+        symbol: cp.symbol,
+        decimals: cp.decimals,
+        image: cp.iconUrl,
         isERC721,
         aggregators: formatAggregatorNames(tokenMetadata?.aggregators || []),
       };
-      const previousEntry = newTokens.find(
-        (token) =>
-          (token.account + token.contract).toLowerCase() ===
-          (account + contract).toLowerCase(),
+      const previousEntry = newTokens.find((token) =>
+        isEqual(token.provider, provider),
       );
       if (previousEntry) {
         const previousIndex = newTokens.indexOf(previousEntry);
@@ -318,29 +249,18 @@ export class TokensController extends BaseController<
       } else {
         newTokens.push(newEntry);
       }
-      let newIgnoredTokens: string[] = [];
-      if (contract) {
-        newIgnoredTokens = ignoredTokens.filter(
-          (tokenAddress) =>
-            tokenAddress.toLowerCase() !== contract.toLowerCase(),
-        );
-      }
-      const newDetectedTokens = detectedTokens.filter(
-        (token) =>
-          (token.account + token.contract).toLowerCase() !==
-          (account + contract).toLowerCase(),
+      const newDetectedTokens = detectedTokens.filter((token) =>
+        isEqual(token.provider, provider),
       );
 
       const { newAllTokens, newAllIgnoredTokens, newAllDetectedTokens } =
         this._getNewAllTokensState({
           newTokens,
-          newIgnoredTokens,
           newDetectedTokens,
         });
 
       this.update({
         tokens: newTokens,
-        ignoredTokens: newIgnoredTokens,
         detectedTokens: newDetectedTokens,
         allTokens: newAllTokens,
         allIgnoredTokens: newAllIgnoredTokens,
@@ -559,39 +479,6 @@ export class TokensController extends BaseController<
     return tokens[tokenIndex];
   }
 
-  /**
-   * Detects whether or not a token is ERC-721 compatible.
-   *
-   * @param tokenAddress - The token contract address.
-   * @returns A boolean indicating whether the token address passed in supports the EIP-721
-   * interface.
-   */
-  async _detectIsERC721(tokenAddress: string) {
-    const checksumAddress = toChecksumHexAddress(tokenAddress);
-    // if this token is already in our contract metadata map we don't need
-    // to check against the contract
-    if (contractsMap[checksumAddress]?.erc721 === true) {
-      return Promise.resolve(true);
-    } else if (contractsMap[checksumAddress]?.erc20 === true) {
-      return Promise.resolve(false);
-    }
-
-    const tokenContract = this._createEthersContract(
-      tokenAddress,
-      abiERC721,
-      this.ethersProvider,
-    );
-    try {
-      return await tokenContract.supportsInterface(ERC721_INTERFACE_ID);
-    } catch (error: any) {
-      // currently we see a variety of errors across different networks when
-      // token contracts are not ERC721 compatible. We need to figure out a better
-      // way of differentiating token interface types but for now if we get an error
-      // we have to assume the token is not ERC721 compatible.
-      return false;
-    }
-  }
-
   _createEthersContract(
     tokenAddress: string,
     abi: string,
@@ -722,15 +609,14 @@ export class TokensController extends BaseController<
   }
 
   /**
-   * Takes a new tokens and ignoredTokens array for the current network/account combination
+   * Takes a new tokens and ignoredTokens array for account
    * and returns new allTokens and allIgnoredTokens state to update to.
    *
    * @param params - Object that holds token params.
-   * @param params.newTokens - The new tokens to set for the current network and selected account.
-   * @param params.newIgnoredTokens - The new ignored tokens to set for the current network and selected account.
-   * @param params.newDetectedTokens - The new detected tokens to set for the current network and selected account.
+   * @param params.newTokens - The new tokens to set for selected account.
+   * @param params.newIgnoredTokens - The new ignored tokens to set for selected account.
+   * @param params.newDetectedTokens - The new detected tokens to set for selected account.
    * @param params.detectionAddress - The address on which the detected tokens to add were detected.
-   * @param params.detectionChainId - The chainId on which the detected tokens to add were detected.
    * @returns The updated `allTokens` and `allIgnoredTokens` state.
    */
   _getNewAllTokensState(params: {
@@ -738,37 +624,28 @@ export class TokensController extends BaseController<
     newIgnoredTokens?: string[];
     newDetectedTokens?: Token[];
     detectionAddress?: string;
-    detectionChainId?: string;
   }) {
     const {
       newTokens,
       newIgnoredTokens,
       newDetectedTokens,
       detectionAddress,
-      detectionChainId,
     } = params;
     const { allTokens, allIgnoredTokens, allDetectedTokens } = this.state;
-    const { chainId, selectedAddress } = this.config;
+    const { selectedAddress } = this.config;
 
     const userAddressToAddTokens = detectionAddress ?? selectedAddress;
-    const chainIdToAddTokens = detectionChainId ?? chainId;
 
     let newAllTokens = allTokens;
     if (
       newTokens?.length ||
       (newTokens &&
         allTokens &&
-        allTokens[chainIdToAddTokens] &&
-        allTokens[chainIdToAddTokens][userAddressToAddTokens])
+        allTokens[userAddressToAddTokens])
     ) {
-      const networkTokens = allTokens[chainIdToAddTokens];
-      const newNetworkTokens = {
-        ...networkTokens,
-        ...{ [userAddressToAddTokens]: newTokens },
-      };
       newAllTokens = {
         ...allTokens,
-        ...{ [chainIdToAddTokens]: newNetworkTokens },
+        ...{ [userAddressToAddTokens]: newTokens },
       };
     }
 
@@ -777,17 +654,11 @@ export class TokensController extends BaseController<
       newIgnoredTokens?.length ||
       (newIgnoredTokens &&
         allIgnoredTokens &&
-        allIgnoredTokens[chainIdToAddTokens] &&
-        allIgnoredTokens[chainIdToAddTokens][userAddressToAddTokens])
+        allIgnoredTokens[userAddressToAddTokens])
     ) {
-      const networkIgnoredTokens = allIgnoredTokens[chainIdToAddTokens];
       const newIgnoredNetworkTokens = {
-        ...networkIgnoredTokens,
-        ...{ [userAddressToAddTokens]: newIgnoredTokens },
-      };
-      newAllIgnoredTokens = {
         ...allIgnoredTokens,
-        ...{ [chainIdToAddTokens]: newIgnoredNetworkTokens },
+        ...{ [userAddressToAddTokens]: newIgnoredTokens },
       };
     }
 
@@ -796,17 +667,11 @@ export class TokensController extends BaseController<
       newDetectedTokens?.length ||
       (newDetectedTokens &&
         allDetectedTokens &&
-        allDetectedTokens[chainIdToAddTokens] &&
-        allDetectedTokens[chainIdToAddTokens][userAddressToAddTokens])
+        allDetectedTokens[userAddressToAddTokens])
     ) {
-      const networkDetectedTokens = allDetectedTokens[chainIdToAddTokens];
-      const newDetectedNetworkTokens = {
-        ...networkDetectedTokens,
-        ...{ [userAddressToAddTokens]: newDetectedTokens },
-      };
       newAllDetectedTokens = {
         ...allDetectedTokens,
-        ...{ [chainIdToAddTokens]: newDetectedNetworkTokens },
+        ...{ [userAddressToAddTokens]: newDetectedTokens },
       };
     }
     return { newAllTokens, newAllIgnoredTokens, newAllDetectedTokens };

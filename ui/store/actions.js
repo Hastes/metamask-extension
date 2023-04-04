@@ -43,7 +43,6 @@ import {
   fetchLocale,
   loadRelativeTimeFormatLocaleData,
 } from '../helpers/utils/i18n-helper';
-import { CHAIN_IDS, NETWORK_TYPES } from '../../shared/constants/network';
 import { decimalToHex } from '../../shared/modules/conversion.utils';
 import * as actionConstants from './actionConstants';
 import {
@@ -1578,6 +1577,48 @@ export function setSelectedAddress(address) {
   };
 }
 
+export function setSelectedAccount(address) {
+  return async (dispatch, getState) => {
+    dispatch(showLoadingIndication());
+    log.debug(`background.setSelectedAddress`);
+
+    const state = getState();
+    const unconnectedAccountAccountAlertIsEnabled =
+      getUnconnectedAccountAlertEnabledness(state);
+    const activeTabOrigin = state.activeTab.origin;
+    const selectedAddress = getSelectedAddress(state);
+    const permittedAccountsForCurrentTab =
+      getPermittedAccountsForCurrentTab(state);
+    const currentTabIsConnectedToPreviousAddress =
+      Boolean(activeTabOrigin) &&
+      permittedAccountsForCurrentTab.includes(selectedAddress);
+    const currentTabIsConnectedToNextAddress =
+      Boolean(activeTabOrigin) &&
+      permittedAccountsForCurrentTab.includes(address);
+    const switchingToUnconnectedAddress =
+      currentTabIsConnectedToPreviousAddress &&
+      !currentTabIsConnectedToNextAddress;
+
+    try {
+      await _setSelectedAddress(address);
+      await forceUpdateMetamaskState(dispatch);
+    } catch (error) {
+      dispatch(displayWarning(error));
+      return;
+    } finally {
+      dispatch(hideLoadingIndication());
+    }
+
+    if (
+      unconnectedAccountAccountAlertIsEnabled &&
+      switchingToUnconnectedAddress
+    ) {
+      dispatch(switchedToUnconnectedAccount());
+      await setUnconnectedAccountAlertShown(activeTabOrigin);
+    }
+  };
+}
+
 export function addPermittedAccount(origin, address) {
   return async (dispatch) => {
     await new Promise((resolve, reject) => {
@@ -2210,63 +2251,62 @@ export function hideLoadingIndication() {
 
 export function initMultichainAccounts() {
   log.debug(`background.initAccounts`);
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     dispatch(showLoadingIndication());
     try {
-      const { btcAccount, bscAccount, tronAccount } =
-        await submitRequestToBackground('initAccounts');
-      dispatch(
-        addTokens([
-          {
-            provider: {
-              chainId: CHAIN_IDS.BTC,
-              type: NETWORK_TYPES.BITCOIN,
-              rpcUrl: null,
-            },
-            account: btcAccount.address,
-            symbol: 'BTC',
-            decimals: 9,
-            image:
-              'https://www.citypng.com/public/uploads/preview/-51614559661pdiz2gx0zn.png',
-          },
-          {
-            provider: {
-              chainId: CHAIN_IDS.BINANCE_CHAIN,
-              type: NETWORK_TYPES.BINANCE_CHAIN,
-              rpcUrl: null,
-            },
-            account: bscAccount.address,
-            symbol: 'BNB',
-            decimals: 18,
-            image:
-              'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
-          },
-          {
-            provider: {
-              chainId: CHAIN_IDS.BSC_TESTNET,
-              type: NETWORK_TYPES.RPC,
-              rpcUrl: 'https://data-seed-prebsc-2-s2.binance.org:8545',
-            },
-            account: getState().metamask.selectedAddress,
-            // contract: '0xd66c6b4f0be8ce5b39d52e0fd1344c389929b378',
-            symbol: 'tBNB',
-            decimals: 18,
-            image:
-              'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
-          },
-          {
-            provider: {
-              chainId: CHAIN_IDS.TRON,
-              type: NETWORK_TYPES.TRON,
-              rpcUrl: null,
-            },
-            account: tronAccount.address,
-            symbol: 'tTRX',
-            decimals: 6,
-            image: 'https://cryptologos.cc/logos/tron-trx-logo.png',
-          },
-        ]),
-      );
+      submitRequestToBackground('initAccounts');
+      // dispatch(
+      //   addTokens([
+      //     {
+      //       provider: {
+      //         chainId: CHAIN_IDS.BTC,
+      //         type: NETWORK_TYPES.BITCOIN,
+      //         rpcUrl: null,
+      //       },
+      //       account: btcAccount.address,
+      //       symbol: 'BTC',
+      //       decimals: 9,
+      //       image:
+      //         'https://www.citypng.com/public/uploads/preview/-51614559661pdiz2gx0zn.png',
+      //     },
+      //     {
+      //       provider: {
+      //         chainId: CHAIN_IDS.BINANCE_CHAIN,
+      //         type: NETWORK_TYPES.BINANCE_CHAIN,
+      //         rpcUrl: null,
+      //       },
+      //       account: bscAccount.address,
+      //       symbol: 'BNB',
+      //       decimals: 18,
+      //       image:
+      //         'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
+      //     },
+      //     {
+      //       provider: {
+      //         chainId: CHAIN_IDS.BSC_TESTNET,
+      //         type: NETWORK_TYPES.RPC,
+      //         rpcUrl: 'https://data-seed-prebsc-2-s2.binance.org:8545',
+      //       },
+      //       account: getState().metamask.selectedAddress,
+      //       // contract: '0xd66c6b4f0be8ce5b39d52e0fd1344c389929b378',
+      //       symbol: 'tBNB',
+      //       decimals: 18,
+      //       image:
+      //         'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
+      //     },
+      //     {
+      //       provider: {
+      //         chainId: CHAIN_IDS.TRON,
+      //         type: NETWORK_TYPES.TRON,
+      //         rpcUrl: null,
+      //       },
+      //       account: tronAccount.address,
+      //       symbol: 'tTRX',
+      //       decimals: 6,
+      //       image: 'https://cryptologos.cc/logos/tron-trx-logo.png',
+      //     },
+      //   ]),
+      // );
     } catch (error) {
       dispatch(displayWarning(error.message));
       throw error;
@@ -2456,6 +2496,18 @@ export function setFeatureFlag(feature, activated, notificationType) {
         },
       );
     });
+  };
+}
+
+export function setProviderType(type) {
+  return async (dispatch) => {
+    log.debug(`background.setProviderType`, type);
+
+    try {
+      await submitRequestToBackground('setProviderType', [type]);
+    } catch (error) {
+      dispatch(displayWarning('Had a problem changing networks!'));
+    }
   };
 }
 

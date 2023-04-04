@@ -1,6 +1,7 @@
 import BN from 'bn.js';
-import HdKeyring from '@metamask/eth-hd-keyring';
 import { BncClient } from '@binance-chain/javascript-sdk';
+import { arrToBufArr } from 'ethereumjs-util';
+import { HDKey } from 'ethereum-cryptography/hdkey';
 
 import ChainProvider from './interface';
 
@@ -11,6 +12,13 @@ const HOST = {
 
 export default class ChainBinance implements ChainProvider {
   client: any;
+
+  defaultSymbol = 'tBNB';
+
+  defaultDecimals = 18;
+
+  defaultIconUrl =
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Binance_Logo.svg/2048px-Binance_Logo.svg.png';
 
   constructor() {
     this.client = new BncClient(HOST.testnet);
@@ -26,20 +34,21 @@ export default class ChainBinance implements ChainProvider {
     return new BN(result, decimals);
   }
 
-  async getAccount(
-    keyring: typeof HdKeyring,
-  ): Promise<{ address: string; privateKey: string }> {
-    const mnemonic = await keyring
-      .serialize()
-      .then((v: any) => Buffer.from(v.mnemonic).toString());
-    return this.client.recoverAccountFromMnemonic(mnemonic);
+  getAccount(
+    hdKey: HDKey,
+  ): { address: string; privateKey: string } {
+    if (!hdKey.privateKey) {
+      throw new Error('Not provided private key')
+    }
+    const privKeyString = arrToBufArr(hdKey.privateKey).toString('hex');
+    return this.client.recoverAccountFromPrivateKey(privKeyString);
   }
 
   isAddress(address: string): boolean {
     return true;
   }
 
-  simpleSend() {
+  async simpleSend(hdKey: HDKey, to: string, amount: string) {
     return true;
   }
 }

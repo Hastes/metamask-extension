@@ -22,7 +22,7 @@ function getTokensURL(chainId: string) {
  * @param tokenAddress - The token address.
  * @returns The token metadata URL.
  */
-function getTokenMetadataURL(chainId: string, tokenAddress: string) {
+function getTokenMetadataURL(chainId: string, tokenAddress?: string) {
   return `${TOKEN_END_POINT_API}/token/${chainId}?address=${tokenAddress}`;
 }
 
@@ -68,8 +68,8 @@ export async function fetchTokenList(
  */
 export async function fetchTokenMetadata<T>(
   chainId: string,
-  tokenAddress: string,
-  abortSignal: AbortSignal,
+  tokenAddress?: string,
+  abortSignal?: AbortSignal,
   { timeout = defaultTimeout } = {},
 ): Promise<T | undefined> {
   if (!isTokenListSupportedForNetwork(chainId)) {
@@ -93,8 +93,8 @@ export async function fetchTokenMetadata<T>(
  */
 async function queryApi(
   apiURL: string,
-  abortSignal: AbortSignal,
-  timeout: number,
+  abortSignal?: AbortSignal,
+  timeout: number = defaultTimeout,
 ): Promise<Response | undefined> {
   const fetchOptions: RequestInit = {
     referrer: apiURL,

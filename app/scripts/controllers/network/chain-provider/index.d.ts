@@ -11,4 +11,6 @@ export declare type ProviderConfig = {
   type: NetworkType;
   rpcUrl?: string;
   contract?: string;
+  decimals?: number;
+  symbol?: string;
 };

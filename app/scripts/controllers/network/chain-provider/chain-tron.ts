@@ -1,7 +1,7 @@
 import BN from 'bn.js';
 import TronWeb from 'tronweb';
-import HdKeyring from '@metamask/eth-hd-keyring';
-import { unpadHexString } from 'ethereumjs-util';
+import { HDKey } from 'ethereum-cryptography/hdkey';
+import { arrToBufArr } from 'ethereumjs-util';
 
 import ChainProvider from './interface';
 
@@ -12,6 +12,12 @@ const TRON_HOST = {
 
 export default class ChainTron implements ChainProvider {
   client: any;
+
+  defaultSymbol = 'tTRX';
+
+  defaultDecimals = 6;
+
+  defaultIconUrl = 'https://cryptologos.cc/logos/tron-trx-logo.png';
 
   constructor() {
     this.client = new TronWeb({
@@ -24,20 +30,24 @@ export default class ChainTron implements ChainProvider {
     return new BN(result, decimals);
   }
 
-  async getAccount(
-    keyring: typeof HdKeyring,
-  ): Promise<{ address: string; publicKey: string; privateKey: string }> {
-    const mnemonic = await keyring
-      .serialize()
-      .then((v: any) => Buffer.from(v.mnemonic).toString());
-    const tronAccount = TronWeb.fromMnemonic(mnemonic);
-    return tronAccount;
+  getAccount(
+    hdKey: HDKey,
+  ): { address: string; privateKey: string } {
+    if (!hdKey.privateKey) {
+      throw new Error('Not provided private key');
+    };
+    const privKeyString = arrToBufArr(hdKey.privateKey).toString('hex');
+    const address = this.client.address.fromPrivateKey(privKeyString);
+    return {
+      address,
+      privateKey: privKeyString,
+    };
   }
 
-  async simpleSend(keyring: typeof HdKeyring, to: string, amount: string) {
-    const account = await this.getAccount(keyring);
-    const pk = unpadHexString(account.privateKey);
-    this.client.trx.sendTransaction(to, parseInt(amount, 16), pk);
+  simpleSend(hdKey: HDKey, to: string, amount: string) {
+    const account = this.getAccount(hdKey);
+    const pk = account.privateKey;
+    return this.client.trx.sendTransaction(to, parseInt(amount, 16), pk);
   }
 
   /**

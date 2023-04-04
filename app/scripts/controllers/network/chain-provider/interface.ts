@@ -1,12 +1,12 @@
 import BN from 'bn.js';
-import { MetaMaskKeyring } from '@keystonehq/metamask-airgapped-keyring';
+import { HDKey } from 'ethereum-cryptography/hdkey';
 
 export default interface ChainProvider {
   client: any;
 
   getBalance(address: string, decimals: number): Promise<BN>;
 
-  getAccount(keyring: MetaMaskKeyring): any;
+  getAccount(keyring: HDKey): any;
 
   isAddress(address: string): boolean;
 }
