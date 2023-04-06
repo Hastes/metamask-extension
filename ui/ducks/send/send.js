@@ -108,7 +108,7 @@ import {
 } from '../../../shared/lib/transactions-controller-utils';
 import { Numeric } from '../../../shared/modules/Numeric';
 import { EtherDenomination } from '../../../shared/constants/common';
-import { CHAIN_IDS } from '../../../shared/constants/network';
+import { CHAIN_IDS, NETWORK_TYPES } from '../../../shared/constants/network';
 import {
   estimateGasLimitForSend,
   generateTransactionParams,
@@ -503,56 +503,63 @@ export const computeEstimatedGasLimit = createAsyncThunk(
     const unapprovedTxs = getUnapprovedTxs(state);
     const isMultiLayerFeeNetwork = getIsMultiLayerFeeNetwork(state);
     const transaction = unapprovedTxs[draftTransaction.id];
-    const chainId =
-      draftTransaction.asset.details.provider.chainId ||
-      getCurrentChainId(state);
+    const { provider } = draftTransaction.asset.details;
+    const chainId = provider.chainId || getCurrentChainId(state);
+
+    const isEthTypeNetwork = [
+      NETWORK_TYPES.MAINNET,
+      NETWORK_TYPES.RPC,
+    ].includes(provider.type);
+
     const isNonStandardEthChain = ![
       CHAIN_IDS.MAINNET,
       CHAIN_IDS.GOERLI,
     ].includes(chainId);
 
-    let gasTotalForLayer1;
-    if (isMultiLayerFeeNetwork) {
-      gasTotalForLayer1 = await fetchEstimatedL1Fee({
-        txParams: {
-          gasPrice: draftTransaction.gas.gasPrice,
-          gas: draftTransaction.gas.gasLimit,
-          to: draftTransaction.recipient.address?.toLowerCase(),
-          value:
-            send.amountMode === AMOUNT_MODES.MAX
-              ? send.selectedAccount.balance
-              : draftTransaction.amount.value,
-          from: send.selectedAccount.address,
-          data: draftTransaction.userInputHexData,
-          type: '0x0',
-        },
-      });
-    }
-    if (
-      send.stage !== SEND_STAGES.EDIT ||
-      !transaction.dappSuggestedGasFees?.gas ||
-      !transaction.userEditedGasLimit
-    ) {
-      try {
-        const gasLimit = await estimateGasLimitForSend({
-          gasPrice: draftTransaction.gas.gasPrice,
-          blockGasLimit: metamask.currentBlockGasLimit,
-          selectedAddress: metamask.selectedAddress,
-          sendToken: draftTransaction.asset.details,
-          to: draftTransaction.recipient.address?.toLowerCase(),
-          value: draftTransaction.amount.value,
-          data: draftTransaction.userInputHexData,
-          isNonStandardEthChain,
-          chainId,
-          gasLimit: draftTransaction.gas.gasLimit,
+    if (isEthTypeNetwork) {
+      let gasTotalForLayer1;
+      if (isMultiLayerFeeNetwork) {
+        gasTotalForLayer1 = await fetchEstimatedL1Fee({
+          txParams: {
+            gasPrice: draftTransaction.gas.gasPrice,
+            gas: draftTransaction.gas.gasLimit,
+            to: draftTransaction.recipient.address?.toLowerCase(),
+            value:
+              send.amountMode === AMOUNT_MODES.MAX
+                ? send.selectedAccount.balance
+                : draftTransaction.amount.value,
+            from: send.selectedAccount.address,
+            data: draftTransaction.userInputHexData,
+            type: '0x0',
+          },
         });
-        await thunkApi.dispatch(setCustomGasLimit(gasLimit));
-        return {
-          gasLimit,
-          gasTotalForLayer1,
-        };
-      } catch (err) {
-        return null;
+      }
+      if (
+        send.stage !== SEND_STAGES.EDIT ||
+        !transaction.dappSuggestedGasFees?.gas ||
+        !transaction.userEditedGasLimit
+      ) {
+        try {
+          const gasLimit = await estimateGasLimitForSend({
+            gasPrice: draftTransaction.gas.gasPrice,
+            blockGasLimit: metamask.currentBlockGasLimit,
+            selectedAddress: metamask.selectedAddress,
+            sendToken: draftTransaction.asset.details,
+            to: draftTransaction.recipient.address?.toLowerCase(),
+            value: draftTransaction.amount.value,
+            data: draftTransaction.userInputHexData,
+            isNonStandardEthChain,
+            chainId,
+            gasLimit: draftTransaction.gas.gasLimit,
+          });
+          await thunkApi.dispatch(setCustomGasLimit(gasLimit));
+          return {
+            gasLimit,
+            gasTotalForLayer1,
+          };
+        } catch (err) {
+          return null;
+        }
       }
     }
     return null;
@@ -628,14 +635,10 @@ export const initializeSendState = createAsyncThunk(
         ? draftTransaction.gas.gasPrice
         : '0x1';
     let gasEstimatePollToken = null;
-
-    try {
+    if ([NETWORK_TYPES.MAINNET, NETWORK_TYPES.RPC].includes(provider.type)) {
       // Instruct the background process that polling for gas prices should begin
-      gasEstimatePollToken = await getGasFeeEstimatesAndStartPolling();
-
+      gasEstimatePollToken = await getGasFeeEstimatesAndStartPolling(provider);
       addPollingTokenToAppState(gasEstimatePollToken);
-    } catch (err) {
-      console.error(err);
     }
 
     const {
@@ -917,15 +920,9 @@ const slice = createSlice({
       const draftTransaction =
         state.draftTransactions[state.currentTransactionUUID];
       let amount = '0x0';
-      if (
-        [AssetType.token, AssetType.native].includes(
-          draftTransaction.asset.type,
-        )
-      ) {
-        const decimals = draftTransaction.asset.details?.decimals ?? 0;
-
-        const multiplier = Math.pow(10, Number(decimals));
-
+      const decimals = draftTransaction.asset.details?.decimals ?? 0;
+      const multiplier = Math.pow(10, Number(decimals));
+      if ([AssetType.token].includes(draftTransaction.asset.type)) {
         amount = new Numeric(draftTransaction.asset.balance, 16)
           .times(multiplier, 10)
           .toString();
@@ -933,10 +930,13 @@ const slice = createSlice({
         const _gasTotal = new Numeric(
           draftTransaction.gas.gasTotal || '0x0',
           16,
-        ).add(new Numeric(state.gasTotalForLayer1 || '0x0', 16));
+        )
+          .shiftedBy(decimals)
+          .add(new Numeric(state.gasTotalForLayer1 || '0x0', 16));
 
         amount = new Numeric(draftTransaction.asset.balance, 16)
           .minus(_gasTotal)
+          .times(multiplier, 10)
           .toString();
       }
       slice.caseReducers.updateSendAmount(state, {
@@ -1443,17 +1443,14 @@ const slice = createSlice({
           //   });
           //   draftTransaction.status = SEND_STATUSES.INVALID;
           //   break;
-          case new BigNumber(draftTransaction.gas.gasLimit, 16).lessThan(
-            new BigNumber(state.gasLimitMinimum),
-          ):
-            slice.caseReducers.addHistoryEntry(state, {
-              payload: `Form is invalid because ${draftTransaction.gas.gasLimit} is lessThan ${state.gasLimitMinimum}`,
-            });
-            console.log(
-              'Form is invalid because ${draftTransaction.gas.gasLimit} is',
-            );
-            draftTransaction.status = SEND_STATUSES.INVALID;
-            break;
+          // case new BigNumber(draftTransaction.gas.gasLimit, 16).lessThan(
+          //   new BigNumber(state.gasLimitMinimum),
+          // ):
+          //   slice.caseReducers.addHistoryEntry(state, {
+          //     payload: `Form is invalid because ${draftTransaction.gas.gasLimit} is lessThan ${state.gasLimitMinimum}`,
+          //   });
+          //   draftTransaction.status = SEND_STATUSES.INVALID;
+          //   break;
           case draftTransaction.recipient.warning === 'loading':
             slice.caseReducers.addHistoryEntry(state, {
               payload: `Form is invalid because recipient warning is loading`,
@@ -1715,6 +1712,8 @@ const debouncedValidateRecipientUserInput = debounce(
 );
 
 /**
+ * TODO: Rewrite for dextrade
+ *
  * Begins a new draft transaction, derived from the txParams of an existing
  * transaction in the TransactionController. This action will first clear out
  * the previous draft transactions and currentTransactionUUID from state. This
@@ -2158,7 +2157,7 @@ export function updateSendAsset(
 
       await dispatch(actions.updateAsset({ asset, initialAssetSet }));
     }
-    if (initialAssetSet === false) {
+    if (!initialAssetSet) {
       await dispatch(computeEstimatedGasLimit());
     }
   };

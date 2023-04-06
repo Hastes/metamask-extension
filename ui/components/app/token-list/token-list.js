@@ -23,26 +23,32 @@ export default function TokenList({ onTokenClick }) {
     true,
     shouldHideZeroBalanceTokens,
   );
-  // if (loading) {
-  //   return (
-  //     <div
-  //       style={{
-  //         display: 'flex',
-  //         height: '250px',
-  //         alignItems: 'center',
-  //         justifyContent: 'center',
-  //         padding: '30px',
-  //       }}
-  //     >
-  //       {t('loadingTokens')}
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          height: '250px',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '30px',
+        }}
+      >
+        {t('loadingTokens')}
+      </div>
+    );
+  }
 
   return (
     <div>
       {tokensWithBalances.map((tokenData, index) => {
-        return <TokenCell key={index} {...tokenData} onClick={onTokenClick} />;
+        return (
+          <TokenCell
+            key={index}
+            {...tokenData}
+            onClick={() => onTokenClick(tokenData)}
+          />
+        );
       })}
     </div>
   );

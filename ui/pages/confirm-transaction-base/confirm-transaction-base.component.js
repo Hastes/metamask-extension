@@ -11,7 +11,7 @@ import {
 } from '../../helpers/constants/error-keys';
 import UserPreferencedCurrencyDisplay from '../../components/app/user-preferenced-currency-display';
 
-import { PRIMARY, SECONDARY } from '../../helpers/constants/common';
+import { SECONDARY } from '../../helpers/constants/common';
 import TextField from '../../components/ui/text-field';
 import CurrencyAssetDisplay from '../../components/ui/currency-asset-display';
 import SimulationErrorMessage from '../../components/ui/simulation-error-message';
@@ -353,17 +353,17 @@ export default class ConfirmTransactionBase extends Component {
     const networkName = NETWORK_TO_NAME_MAP[txData.chainId];
 
     const renderTotalMaxAmount = () => {
+      const { assetDetails } = this.props;
       if (
         primaryTotalTextOverrideMaxAmount === undefined &&
         secondaryTotalTextOverride === undefined
       ) {
         // Native Send
         return (
-          <UserPreferencedCurrencyDisplay
-            type={PRIMARY}
+          <CurrencyAssetDisplay
             key="total-max-amount"
             value={addHexes(txData.txParams.value, hexMaximumTransactionFee)}
-            hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+            provider={assetDetails.provider}
           />
         );
       }
@@ -375,6 +375,7 @@ export default class ConfirmTransactionBase extends Component {
     };
 
     const renderTotalDetailTotal = () => {
+      const { assetDetails } = this.props;
       if (
         primaryTotalTextOverride === undefined &&
         secondaryTotalTextOverride === undefined
@@ -382,11 +383,10 @@ export default class ConfirmTransactionBase extends Component {
         return (
           <div className="confirm-page-container-content__total-value">
             <LoadingHeartBeat estimateUsed={this.props.txData?.userFeeLevel} />
-            <UserPreferencedCurrencyDisplay
-              type={PRIMARY}
+            <CurrencyAssetDisplay
               key="total-detail-value"
               value={hexTransactionTotal}
-              hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+              provider={assetDetails.provider}
             />
           </div>
         );
@@ -449,6 +449,7 @@ export default class ConfirmTransactionBase extends Component {
     ) : null;
 
     const renderGasDetailsItem = () => {
+      const { assetDetails } = this.props;
       return this.supportsEIP1559 ? (
         <GasDetailsItem
           key="gas_details"
@@ -513,11 +514,9 @@ export default class ConfirmTransactionBase extends Component {
           detailTotal={
             <div className="confirm-page-container-content__currency-container">
               {renderHeartBeatIfNotInTest()}
-              <UserPreferencedCurrencyDisplay
-                type={PRIMARY}
+              <CurrencyAssetDisplay
                 value={hexMinimumTransactionFee}
-                hideLabel={!useNativeCurrencyAsPrimaryCurrency}
-                numberOfDecimals={6}
+                provider={assetDetails.provider}
               />
             </div>
           }
@@ -531,11 +530,10 @@ export default class ConfirmTransactionBase extends Component {
                 className="confirm-page-container-content__currency-container"
               >
                 {renderHeartBeatIfNotInTest()}
-                <UserPreferencedCurrencyDisplay
+                <CurrencyAssetDisplay
                   key="editGasSubTextFeeAmount"
-                  type={PRIMARY}
                   value={hexMaximumTransactionFee}
-                  hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+                  provider={assetDetails.provider}
                 />
               </div>
             </>
@@ -857,26 +855,22 @@ export default class ConfirmTransactionBase extends Component {
     if (title) {
       return null;
     }
-    const isContractInteraction =
-      txData.type === TransactionType.contractInteraction;
+    // const isContractInteraction =
+    //   txData.type === TransactionType.contractInteraction;
 
     if (isEthType) {
       return (
-        <UserPreferencedCurrencyDisplay
+        <CurrencyAssetDisplay
           value={hexTransactionAmount}
-          asset={assetDetails}
-          type={PRIMARY}
-          showEthLogo={assetDetails.provider.chainId === CHAIN_IDS.MAINNET}
-          ethLogoHeight={24}
-          numberOfDecimals={assetDetails.decimals}
-          currency={assetDetails.symbol}
-          hideLabel={!isContractInteraction}
-          showCurrencySuffix={isContractInteraction}
+          provider={assetDetails.provider}
         />
       );
     }
     return (
-      <CurrencyAssetDisplay value={hexTransactionAmount} asset={assetDetails} />
+      <CurrencyAssetDisplay
+        value={hexTransactionAmount}
+        provider={assetDetails.provider}
+      />
     );
   }
 

@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Neues Konto"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Konto $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -3638,6 +3638,9 @@
   "supportCenter": {
     "message": "Besuchen Sie unser Support Center"
   },
+  "exchange": {
+    "message": "Exchange"
+  },
   "swap": {
     "message": "Swap"
   },
@@ -4483,10 +4486,10 @@
   "welcomeLoginTitle": {
     "message": "Sagen Sie Hallo zu Ihrer Wallet"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Los geht's"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "MetaMask ist eine sichere Wallet, welche die Welt von web3 für alle zugänglich macht und die das Vertrauen von Millionen genießt."
   },
   "whatsNew": {

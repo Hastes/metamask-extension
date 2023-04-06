@@ -37,7 +37,7 @@ export default class MetaFoxLogo extends PureComponent {
       />
     );
 
-    let imageSrc = './images/logo/metamask-fox.svg';
+    let imageSrc = './images/logo/dextrade-logo.svg';
 
     ///: BEGIN:ONLY_INCLUDE_IN(flask)
     if (src) {

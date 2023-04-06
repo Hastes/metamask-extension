@@ -1457,7 +1457,7 @@
   "newAccount": {
     "message": "Cuenta nueva"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Cuenta $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -2929,10 +2929,10 @@
   "welcomeLoginTitle": {
     "message": "Diga hola a su cartera"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Comencemos"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "Con la confianza de millones de personas, MetaMask es una cartera segura que pone el mundo de la web3 al alcance de todos."
   },
   "whatsNew": {

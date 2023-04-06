@@ -49,15 +49,15 @@
     "description": "The description of the application"
   },
   "appName": {
-    "message": "MetaMask",
+    "message": "DexTrade",
     "description": "The name of the application"
   },
   "appNameBeta": {
-    "message": "MetaMask Beta",
+    "message": "DexTrade Beta",
     "description": "The name of the application (Beta)"
   },
   "appNameFlask": {
-    "message": "MetaMask Flask",
+    "message": "DexTrade Flask",
     "description": "The name of the application (Flask)"
   },
   "approve": {
@@ -461,7 +461,7 @@
   "newAccount": {
     "message": "አዲስ መለያ"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "መለያ $1",
     "description": "Default name of next account to be created on create account screen"
   },

@@ -13,6 +13,7 @@ import { AssetType } from '../../../../shared/constants/transaction';
 import { CONTRACT_ADDRESS_LINK } from '../../../helpers/constants/common';
 import { NETWORK_TYPES } from '../../../../shared/constants/network';
 import GasDisplay from '../gas-display';
+import FeeDisplayTron from '../fee-display-tron';
 import SendAmountRow from './send-amount-row';
 import SendHexDataRow from './send-hex-data-row';
 import SendAssetRow from './send-asset-row';
@@ -79,7 +80,7 @@ export default class SendContent extends Component {
           {isEthGasPrice
             ? this.renderWarning(ETH_GAS_PRICE_FETCH_WARNING_KEY)
             : null}
-          {error ? thisp.renderError(error) : null}
+          {error ? this.renderError(error) : null}
           {warning ? this.renderWarning() : null}
           {showKnownRecipientWarning && !recipientWarningAcknowledged
             ? this.renderRecipientWarning()
@@ -88,7 +89,7 @@ export default class SendContent extends Component {
           <SendAmountRow />
           {networkOrAccountNotSupports1559 && !isTrc20 ? <SendGasRow /> : null}
           {showHexData ? <SendHexDataRow /> : null}
-          {isTrc20 ? null : <GasDisplay gasError={gasError} />}
+          {isTrc20 ? <FeeDisplayTron /> : <GasDisplay gasError={gasError} />}
         </div>
       </PageContainerContent>
     );

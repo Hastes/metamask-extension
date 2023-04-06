@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "新账户"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "账户 $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "迎接您的钱包"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "让我们开始吧"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "MetaMask 深受数百万人信任，是一款可以让所有人进入 web3 世界的安全钱包。"
   },
   "whatsNew": {

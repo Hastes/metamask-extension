@@ -18,6 +18,7 @@ import {
 import { getGasPriceInHexWei } from '../../selectors';
 import { estimateGas } from '../../store/actions';
 import { Numeric } from '../../../shared/modules/Numeric';
+import { getEthQueryFromProviderConfig } from '../../../app/scripts/controllers/network/provider-api-tests/helpers';
 
 export async function estimateGasLimitForSend({
   selectedAddress,
@@ -52,7 +53,7 @@ export async function estimateGasLimitForSend({
   // located in tx-gas-utils.js in the transaction controller folder.
   const paramsForGasEstimate = { from: selectedAddress, value, gasPrice };
 
-  if (sendToken) {
+  if (sendToken.provider.contract) {
     if (!to) {
       // If no to address is provided, we cannot generate the token transfer
       // hexData. hexData in a transaction largely dictates how much gas will
@@ -71,7 +72,7 @@ export async function estimateGasLimitForSend({
       amount: value,
     });
 
-    paramsForGasEstimate.to = sendToken.address;
+    paramsForGasEstimate.to = sendToken.provider.contract;
   } else {
     if (!data) {
       // eth.getCode will return the compiled smart contract code at the
@@ -133,7 +134,15 @@ export async function estimateGasLimitForSend({
   try {
     // Call into the background process that will simulate transaction
     // execution on the node and return an estimate of gasLimit
-    const estimatedGasLimit = await estimateGas(paramsForGasEstimate);
+    const query = getEthQueryFromProviderConfig(sendToken.provider);
+    const estimatedGasLimit = await new Promise((resolve, reject) => {
+      return query.estimateGas(paramsForGasEstimate, (err, res) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(res);
+      });
+    });
     const estimateWithBuffer = addGasBuffer(
       estimatedGasLimit,
       blockGasLimit,

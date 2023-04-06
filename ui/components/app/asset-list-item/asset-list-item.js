@@ -1,7 +1,6 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import copyToClipboard from 'copy-to-clipboard';
 
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -117,7 +116,6 @@ const AssetListItem = ({
     tokenProvider,
   ]);
   const clickRow = () => {
-    copyToClipboard(tokenAddress);
     onClick();
   };
 
@@ -142,15 +140,7 @@ const AssetListItem = ({
         </button>
       }
       titleIcon={titleIcon}
-      subtitle={
-        <div>
-          <div className="asset-list-item__token-address">
-            {shortenAddress(tokenAddress)}
-          </div>
-
-          {secondary ? <h3 title={secondary}>{secondary}</h3> : null}
-        </div>
-      }
+      subtitle={secondary ? <h3 title={secondary}>{secondary}</h3> : null}
       onClick={onClick}
       icon={
         <Identicon

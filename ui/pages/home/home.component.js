@@ -20,7 +20,7 @@ import Box from '../../components/ui/box';
 import ConnectedSites from '../connected-sites';
 import ConnectedAccounts from '../connected-accounts';
 import { Tabs, Tab } from '../../components/ui/tabs';
-import { EthOverview } from '../../components/app/wallet-overview';
+import { WalletHomeOverview } from '../../components/app/wallet-overview';
 import WhatsNewPopup from '../../components/app/whats-new-popup';
 import RecoveryPhraseReminder from '../../components/app/recovery-phrase-reminder';
 import ActionableMessage from '../../components/ui/actionable-message/actionable-message';
@@ -645,7 +645,7 @@ export default class Home extends PureComponent {
           <div className="home__main-view">
             <MenuBar />
             <div className="home__balance-wrapper">
-              {/* <EthOverview /> */}
+              <WalletHomeOverview />
             </div>
             <Tabs
               t={this.context.t}

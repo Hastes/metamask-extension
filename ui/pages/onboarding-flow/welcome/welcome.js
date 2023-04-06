@@ -77,7 +77,7 @@ export default function OnboardingWelcome() {
     category: EVENT.CATEGORIES.ONBOARDING,
     event: EVENT_NAMES.ONBOARDING_WELCOME,
     properties: {
-      message_title: t('welcomeToMetaMask'),
+      message_title: t('welcomeToDexTrade'),
       app_version: global?.platform?.getVersion(),
     },
   });
@@ -92,10 +92,10 @@ export default function OnboardingWelcome() {
           fontWeight={FONT_WEIGHT.NORMAL}
           marginBottom={4}
         >
-          {t('welcomeToMetaMask')}
+          {t('welcomeToDexTrade')}
         </Text>
         <Text textAlign={TEXT_ALIGN.CENTER} marginLeft={6} marginRight={6}>
-          {t('welcomeToMetaMaskIntro')}
+          {t('welcomeToDexTradeIntro')}
         </Text>
         <div className="onboarding-welcome__cards">
           <div className="welcome-card">
@@ -124,7 +124,7 @@ export default function OnboardingWelcome() {
                 marginBottom={6}
                 marginTop={6}
               >
-                {t('welcomeToMetaMaskIntro')}
+                {t('welcomeToDexTradeCreateWallet')}
               </Text>
               <Button
                 data-testid="onboarding-create-wallet"
@@ -161,7 +161,7 @@ export default function OnboardingWelcome() {
                 marginBottom={6}
                 marginTop={6}
               >
-                {t('welcomeToMetaMaskIntro')}
+                {t('welcomeToDexTradeImportWallet')}
               </Text>
               <Button
                 data-testid="onboarding-import-wallet"

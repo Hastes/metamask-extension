@@ -469,7 +469,7 @@
   "newAccount": {
     "message": "Új fiók"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "$1 fiók",
     "description": "Default name of next account to be created on create account screen"
   },

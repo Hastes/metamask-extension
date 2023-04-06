@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Nouveau compte"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Compte $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Dites bonjour à votre portefeuille"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "C’est parti !"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "MetaMask est un portefeuille sécurisé utilisé par des millions de personnes qui rend l’univers du web3 accessible à toutes et à tous."
   },
   "whatsNew": {

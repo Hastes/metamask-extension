@@ -15,7 +15,7 @@ export default class NewAccountModal extends Component {
   };
 
   state = {
-    alias: this.context.t('newAccountNumberName', [
+    alias: this.context.t('newWalletNumberName', [
       this.props.newAccountNumber,
     ]),
   };

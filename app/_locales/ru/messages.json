@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Новый счет"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Счет $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Поприветствуйте свой кошелек"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Давайте приступим к делу"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "MetaMask, которому доверяют миллионы, — это безопасный кошелек, предоставляющий всем доступ к миру web3."
   },
   "whatsNew": {

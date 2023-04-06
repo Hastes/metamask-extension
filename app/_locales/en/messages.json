@@ -136,6 +136,9 @@
   "accountName": {
     "message": "Account name"
   },
+  "walletName": {
+    "message": "Wallet name"
+  },
   "accountNameDuplicate": {
     "message": "This account name already exists",
     "description": "This is an error message shown when the user enters a new account name that matches an existing account name"
@@ -353,19 +356,19 @@
     "description": "The description of the application"
   },
   "appName": {
-    "message": "MetaMask",
+    "message": "DexTrade",
     "description": "The name of the application"
   },
   "appNameBeta": {
-    "message": "MetaMask Beta",
+    "message": "DexTrade Beta",
     "description": "The name of the application (Beta)"
   },
   "appNameFlask": {
-    "message": "MetaMask Flask",
+    "message": "DexTrade Flask",
     "description": "The name of the application (Flask)"
   },
   "appNameMmi": {
-    "message": "MetaMask Institutional",
+    "message": "DexTrade Institutional",
     "description": "The name of the application (MMI)"
   },
   "approve": {
@@ -553,6 +556,9 @@
   },
   "buy": {
     "message": "Buy"
+  },
+  "tokens": {
+    "message": "Tokens"
   },
   "buyAsset": {
     "message": "Buy $1",
@@ -825,6 +831,9 @@
   },
   "createAccount": {
     "message": "Create account"
+  },
+  "createWallet": {
+    "message": "Create wallet"
   },
   "createNewWallet": {
     "message": "Create a new wallet"
@@ -2097,7 +2106,7 @@
     "message": "Must select at least 1 token."
   },
   "myAccounts": {
-    "message": "My accounts"
+    "message": "My wallets"
   },
   "name": {
     "message": "Name"
@@ -2206,8 +2215,8 @@
   "newAccount": {
     "message": "New account"
   },
-  "newAccountNumberName": {
-    "message": "Account $1",
+  "newWalletNumberName": {
+    "message": "Wallet $1",
     "description": "Default name of next account to be created on create account screen"
   },
   "newContact": {
@@ -2578,7 +2587,7 @@
     "message": "Choose your network"
   },
   "onboardingCreateWallet": {
-    "message": "Create a new wallet"
+    "message": "Create a wallet"
   },
   "onboardingImportWallet": {
     "message": "Import an existing wallet"
@@ -3839,6 +3848,9 @@
   "supportCenter": {
     "message": "Visit our support center"
   },
+  "exchange": {
+    "message": "Exchange"
+  },
   "swap": {
     "message": "Swap"
   },
@@ -4693,11 +4705,17 @@
   "welcomeLoginTitle": {
     "message": "Say hello to your wallet"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Welcome to Dextrade"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "Glad to see you, lets start"
+  },
+  "welcomeToDexTradeCreateWallet": {
+    "message": "So, let's make a new wallet!"
+  },
+  "welcomeToDexTradeImportWallet": {
+    "message": "No, I already have the initial phrase"
   },
   "whatsNew": {
     "message": "What's new",

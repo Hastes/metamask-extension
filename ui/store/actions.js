@@ -128,7 +128,6 @@ export function createNewVaultAndRestore(password, seedPhrase) {
       .then(() => {
         dispatch(showAccountsPage());
         dispatch(hideLoadingIndication());
-        dispatch(initMultichainAccounts());
         return vault;
       })
       .catch((err) => {
@@ -147,7 +146,6 @@ export function createNewVaultAndGetSeedPhrase(password) {
     try {
       await createNewVault(password);
       const seedPhrase = await verifySeedPhrase();
-      dispatch(initMultichainAccounts());
       return seedPhrase;
     } catch (error) {
       dispatch(displayWarning(error.message));
@@ -3389,12 +3387,16 @@ export async function updateTokenType(tokenAddress) {
 /**
  * initiates polling for gas fee estimates.
  *
+ * @param {ProviderConfig} provider
  * @returns {string} a unique identify of the polling request that can be used
  *  to remove that request from consideration of whether polling needs to
  *  continue.
  */
-export function getGasFeeEstimatesAndStartPolling() {
-  return submitRequestToBackground('getGasFeeEstimatesAndStartPolling');
+export function getGasFeeEstimatesAndStartPolling(provider) {
+  return submitRequestToBackground('getGasFeeEstimatesAndStartPolling', [
+    undefined,
+    provider,
+  ]);
 }
 
 /**

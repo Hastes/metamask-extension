@@ -12,7 +12,7 @@ export default class NewAccountCreateForm extends Component {
 
   state = {
     newAccountName: '',
-    defaultAccountName: this.context.t('newAccountNumberName', [
+    defaultAccountName: this.context.t('newWalletNumberName', [
       this.props.newAccountNumber,
     ]),
   };
@@ -57,7 +57,7 @@ export default class NewAccountCreateForm extends Component {
     return (
       <div className="new-account-create-form">
         <div className="new-account-create-form__input-label">
-          {this.context.t('accountName')}
+          {this.context.t('walletName')}
         </div>
         <div>
           <input

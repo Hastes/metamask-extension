@@ -28,8 +28,9 @@ export default class TokenInput extends PureComponent {
     showFiat: PropTypes.bool,
     hideConversion: PropTypes.bool,
     token: PropTypes.shape({
-      address: PropTypes.string.isRequired,
-      decimals: PropTypes.number,
+      provider: PropTypes.object.isRequired,
+      account: PropTypes.string,
+      balance: PropTypes.string,
       symbol: PropTypes.string,
     }).isRequired,
     tokenExchangeRates: PropTypes.object,
@@ -107,12 +108,39 @@ export default class TokenInput extends PureComponent {
     } = this.props;
     const { decimalValue } = this.state;
 
-    const existingToken = tokens.find(({ address }) =>
-      isEqualCaseInsensitive(address, token.address),
-    );
-
-    const tokenExchangeRate = tokenExchangeRates?.[existingToken?.address] ?? 0;
+    // const existingToken = tokens.find(({ address }) =>
+    //   isEqualCaseInsensitive(address, token.address),
+    // );
+    // const tokenExchangeRate = tokenExchangeRates?.[existingToken?.address] ?? 0;
     let currency, numberOfDecimals;
+    const tokenExchangeRate = false;
+    if (tokenExchangeRate) {
+      const decimalEthValue = decimalValue * tokenExchangeRate || 0;
+
+      const hexWeiValue = getWeiHexFromDecimalValue({
+        value: decimalEthValue,
+        fromCurrency: EtherDenomination.ETH,
+        fromDenomination: EtherDenomination.ETH,
+      });
+
+      if (showFiat) {
+        // Display Fiat
+        currency = currentCurrency;
+        numberOfDecimals = 2;
+      } else {
+        // Display ETH
+        currency = EtherDenomination.ETH;
+        numberOfDecimals = 6;
+      }
+      return (
+        <CurrencyDisplay
+          className="currency-input__conversion-component"
+          currency={currency}
+          value={hexWeiValue}
+          numberOfDecimals={numberOfDecimals}
+        />
+      );
+    }
 
     if (hideConversion) {
       return (
@@ -122,31 +150,7 @@ export default class TokenInput extends PureComponent {
       );
     }
 
-    if (showFiat) {
-      // Display Fiat
-      currency = currentCurrency;
-      numberOfDecimals = 2;
-    } else {
-      // Display ETH
-      currency = EtherDenomination.ETH;
-      numberOfDecimals = 6;
-    }
-
-    const decimalEthValue = decimalValue * tokenExchangeRate || 0;
-    const hexWeiValue = getWeiHexFromDecimalValue({
-      value: decimalEthValue,
-      fromCurrency: EtherDenomination.ETH,
-      fromDenomination: EtherDenomination.ETH,
-    });
-
-    return tokenExchangeRate ? (
-      <CurrencyDisplay
-        className="currency-input__conversion-component"
-        currency={currency}
-        value={hexWeiValue}
-        numberOfDecimals={numberOfDecimals}
-      />
-    ) : (
+    return (
       <div className="currency-input__conversion-component">
         {this.context.t('noConversionRateAvailable')}
       </div>

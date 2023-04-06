@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Bagong Account"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Account $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Mag-hello sa iyong wallet"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Magsimula na tayo"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "Ang Metamask na pinagkakatiwalaan ng milyun-milyon ay isang ligtas na wallet na ginagawang accessible ang mundo ng web3 para sa lahat."
   },
   "whatsNew": {

@@ -4,13 +4,7 @@ import { debounce } from 'lodash';
 import Fuse from 'fuse.js';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import classnames from 'classnames';
-import { ENVIRONMENT_TYPE_POPUP } from '../../../../shared/constants/app';
-import {
-  EVENT,
-  EVENT_NAMES,
-  CONTEXT_PROPS,
-} from '../../../../shared/constants/metametrics';
-import { getEnvironmentType } from '../../../../app/scripts/lib/util';
+import { EVENT, EVENT_NAMES } from '../../../../shared/constants/metametrics';
 import Identicon from '../../ui/identicon';
 import SiteIcon from '../../ui/site-icon';
 import UserPreferencedCurrencyDisplay from '../user-preferenced-currency-display';
@@ -21,10 +15,9 @@ import {
   ///: END:ONLY_INCLUDE_IN
 } from '../../../helpers/constants/common';
 import {
-  SETTINGS_ROUTE,
   NEW_ACCOUNT_ROUTE,
   IMPORT_ACCOUNT_ROUTE,
-  CONNECT_HARDWARE_ROUTE,
+  // CONNECT_HARDWARE_ROUTE,
   DEFAULT_ROUTE,
   ///: BEGIN:ONLY_INCLUDE_IN(flask)
   NOTIFICATIONS_ROUTE,
@@ -372,7 +365,7 @@ export default class AccountMenu extends Component {
           icon={
             <Icon name={ICON_NAMES.ADD} color={IconColor.iconAlternative} />
           }
-          text={t('createAccount')}
+          text={t('createWallet')}
         />
         <AccountMenuItem
           onClick={() => {
@@ -392,7 +385,7 @@ export default class AccountMenu extends Component {
           }
           text={t('importAccount')}
         />
-        <AccountMenuItem
+        {/* <AccountMenuItem
           onClick={() => {
             toggleAccountMenu();
             trackEvent({
@@ -416,7 +409,7 @@ export default class AccountMenu extends Component {
             />
           }
           text={t('connectHardwareWallet')}
-        />
+        /> */}
         {
           ///: BEGIN:ONLY_INCLUDE_IN(flask)
           <>

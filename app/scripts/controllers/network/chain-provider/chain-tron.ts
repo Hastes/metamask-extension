@@ -30,12 +30,10 @@ export default class ChainTron implements ChainProvider {
     return new BN(result, decimals);
   }
 
-  getAccount(
-    hdKey: HDKey,
-  ): { address: string; privateKey: string } {
+  getAccount(hdKey: HDKey): { address: string; privateKey: string } {
     if (!hdKey.privateKey) {
       throw new Error('Not provided private key');
-    };
+    }
     const privKeyString = arrToBufArr(hdKey.privateKey).toString('hex');
     const address = this.client.address.fromPrivateKey(privKeyString);
     return {
@@ -57,6 +55,10 @@ export default class ChainTron implements ChainProvider {
    */
   isAddress(address: string): boolean {
     return TronWeb.isAddress(address);
+  }
+
+  getFee() {
+    return this.client.trx.getChainParameters();
   }
 }
 

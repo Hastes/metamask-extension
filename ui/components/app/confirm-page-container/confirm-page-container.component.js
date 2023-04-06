@@ -160,6 +160,8 @@ const ConfirmPageContainer = (props) => {
     collectionBalance,
   ]);
 
+  const asset = currentTransaction.txParams?.assetDetails;
+
   return (
     <GasFeeContextProvider transaction={currentTransaction}>
       <div className="page-container" data-testid="page-container">
@@ -181,6 +183,7 @@ const ConfirmPageContainer = (props) => {
             onEdit={() => onEdit()}
             showAccountInHeader={showAccountInHeader}
             accountAddress={fromAddress}
+            provider={asset?.provider}
           >
             {hideSenderToRecipient ? null : (
               <SenderToRecipient

@@ -1,11 +1,11 @@
-import React, { useContext, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import ImportTokenLink from '../import-token-link';
 import TokenList from '../token-list';
 import AssetListItem from '../asset-list-item';
+import { showModal } from '../../../store/actions';
 import { PRIMARY, SECONDARY } from '../../../helpers/constants/common';
 import { useUserPreferencedCurrency } from '../../../hooks/useUserPreferencedCurrency';
+import { CHAIN_IDS, NETWORK_TYPES } from '../../../../shared/constants/network';
 import {
   getSelectedAccountCachedBalance,
   getShouldShowFiat,
@@ -14,35 +14,26 @@ import {
   getIstokenDetectionInactiveOnNonMainnetSupportedNetwork,
   getSelectedAccount,
 } from '../../../selectors';
-import { initMultichainAccounts } from '../../../store/actions';
-import { getNativeCurrency } from '../../../ducks/metamask/metamask';
 import { useCurrencyDisplay } from '../../../hooks/useCurrencyDisplay';
-import Typography from '../../ui/typography/typography';
-import Box from '../../ui/box/box';
-import {
-  Color,
-  TypographyVariant,
-  FONT_WEIGHT,
-  JustifyContent,
-} from '../../../helpers/constants/design-system';
-import { useI18nContext } from '../../../hooks/useI18nContext';
-import { MetaMetricsContext } from '../../../contexts/metametrics';
-import { EVENT, EVENT_NAMES } from '../../../../shared/constants/metametrics';
+
 import DetectedToken from '../detected-token/detected-token';
 import DetectedTokensLink from './detetcted-tokens-link/detected-tokens-link';
 
-const AssetList = ({ onClickAsset }) => {
-  const t = useI18nContext();
-
+const AssetList = () => {
   const [showDetectedTokens, setShowDetectedTokens] = useState(false);
 
   const selectedAccountBalance = useSelector(getSelectedAccountCachedBalance);
   const selectedAccount = useSelector(getSelectedAccount);
-  const nativeCurrency = useSelector(getNativeCurrency);
+
   const showFiat = useSelector(getShouldShowFiat);
-  const trackEvent = useContext(MetaMetricsContext);
+
   const balance = useSelector(getSelectedAccountCachedBalance);
   const balanceIsLoading = !balance;
+
+  const ethProviderConfig = {
+    type: NETWORK_TYPES.MAINNET,
+    chainId: CHAIN_IDS.MAINNET,
+  };
 
   const {
     currency: primaryCurrency,
@@ -72,17 +63,17 @@ const AssetList = ({ onClickAsset }) => {
   const istokenDetectionInactiveOnNonMainnetSupportedNetwork = useSelector(
     getIstokenDetectionInactiveOnNonMainnetSupportedNetwork,
   );
-  const dispatch = useDispatch();
+  const dispatch = useDispatch(false);
 
   return (
     <>
       <AssetListItem
-        onClick={() => dispatch(initMultichainAccounts())}
+        onClick={() => dispatch(showModal({ name: 'ACCOUNT_DETAILS' }))}
         data-testid="wallet-balance"
         primary={
           primaryCurrencyProperties.value ?? secondaryCurrencyProperties.value
         }
-        tokenProvider={{ chainId: '0x1' }}
+        tokenProvider={ethProviderConfig}
         tokenAddress={selectedAccount.address}
         tokenSymbol={primaryCurrencyProperties.suffix}
         secondary={showFiat ? secondaryCurrencyDisplay : undefined}
@@ -91,12 +82,16 @@ const AssetList = ({ onClickAsset }) => {
         tokenDecimals={18}
         identiconBorder
       />
-      <TokenList />
+      <TokenList
+        onTokenClick={(tokenData) =>
+          dispatch(showModal({ name: 'ACCOUNT_DETAILS', token: tokenData }))
+        }
+      />
       {detectedTokens.length > 0 &&
         !istokenDetectionInactiveOnNonMainnetSupportedNetwork && (
           <DetectedTokensLink setShowDetectedTokens={setShowDetectedTokens} />
         )}
-      <Box marginTop={detectedTokens.length > 0 ? 0 : 4}>
+      {/* <Box marginTop={detectedTokens.length > 0 ? 0 : 4}>
         <Box justifyContent={JustifyContent.center}>
           <Typography
             color={Color.textAlternative}
@@ -107,16 +102,12 @@ const AssetList = ({ onClickAsset }) => {
           </Typography>
         </Box>
         <ImportTokenLink />
-      </Box>
+      </Box> */}
       {showDetectedTokens && (
         <DetectedToken setShowDetectedTokens={setShowDetectedTokens} />
       )}
     </>
   );
-};
-
-AssetList.propTypes = {
-  onClickAsset: PropTypes.func.isRequired,
 };
 
 export default AssetList;

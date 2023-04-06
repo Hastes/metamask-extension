@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Yeni hesap"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Hesap $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Cüzdanınıza merhaba deyin"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Başlayalım"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "Milyonların güvendiği MetaMask, web3 dünyasını herkes için erişilebilir kılan güvenli bir cüzdandır."
   },
   "whatsNew": {

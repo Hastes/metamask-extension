@@ -18,12 +18,13 @@ WalletOverview.propTypes = {
   balance: PropTypes.element.isRequired,
   buttons: PropTypes.element.isRequired,
   className: PropTypes.string,
-  icon: PropTypes.element.isRequired,
+  icon: PropTypes.element,
   loading: PropTypes.bool,
 };
 
 WalletOverview.defaultProps = {
   className: undefined,
+  icon: undefined,
 };
 
 export default WalletOverview;

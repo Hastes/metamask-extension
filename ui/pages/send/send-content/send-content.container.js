@@ -22,7 +22,8 @@ function mapStateToProps(state) {
   const tx = getCurrentDraftTransaction(state);
 
   return {
-    isEthGasPrice: getIsEthGasPriceFetched(state),
+    // isEthGasPrice: getIsEthGasPriceFetched(state),
+    isEthGasPrice: false,
     noGasPrice: getNoGasPriceFetched(state),
     networkOrAccountNotSupports1559: !tx.eip1559support,
     getIsBalanceInsufficient: getIsBalanceInsufficient(state),

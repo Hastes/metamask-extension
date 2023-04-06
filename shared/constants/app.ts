@@ -115,7 +115,7 @@ export const CHROME_BUILD_IDS = [
 ] as const;
 
 const METAMASK_BETA_FIREFOX_ID = 'webextension-beta@metamask.io';
-const METAMASK_PROD_FIREFOX_ID = 'webextension@metamask.io';
+const METAMASK_PROD_FIREFOX_ID = 'webextension@dextrade.io';
 const METAMASK_FLASK_FIREFOX_ID = 'webextension-flask@metamask.io';
 
 export const FIREFOX_BUILD_IDS = [

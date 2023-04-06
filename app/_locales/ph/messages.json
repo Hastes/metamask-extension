@@ -924,7 +924,7 @@
   "newAccount": {
     "message": "Bagong Account"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Account $1",
     "description": "Default name of next account to be created on create account screen"
   },

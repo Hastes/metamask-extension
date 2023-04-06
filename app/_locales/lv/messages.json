@@ -472,7 +472,7 @@
   "newAccount": {
     "message": "Jauns konts"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Konts $1",
     "description": "Default name of next account to be created on create account screen"
   },

@@ -467,7 +467,7 @@
   "newAccount": {
     "message": "Nov nalog"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Nalog $1",
     "description": "Default name of next account to be created on create account screen"
   },

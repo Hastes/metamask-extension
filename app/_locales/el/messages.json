@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Νέος Λογαριασμός"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Λογαριασμός $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Πείτε γεια στο πορτοφόλι σας"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Ας ξεκινήσουμε"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "Αξιόπιστο για εκατομμύρια, το MetaMask είναι ένα ασφαλές πορτοφόλι που καθιστά τον κόσμο του web3 προσβάσιμο σε όλους."
   },
   "whatsNew": {

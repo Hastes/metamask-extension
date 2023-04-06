@@ -26,19 +26,17 @@ import TransactionDetailItem from '../../../components/app/transaction-detail-it
 import { NETWORK_TO_NAME_MAP } from '../../../../shared/constants/network';
 import TransactionDetail from '../../../components/app/transaction-detail';
 import ActionableMessage from '../../../components/ui/actionable-message';
+import CurrencyAssetDisplay from '../../../components/ui/currency-asset-display';
+
 import {
-  getProvider,
   getPreferences,
   getIsBuyableChain,
   transactionFeeSelector,
-  getIsMainnet,
-  getIsTestnet,
   getUseCurrencyRateCheck,
 } from '../../../selectors';
 
 import { INSUFFICIENT_TOKENS_ERROR } from '../send.constants';
 import { getCurrentDraftTransaction } from '../../../ducks/send';
-import { getNativeCurrency } from '../../../ducks/metamask/metamask';
 import { showModal } from '../../../store/actions';
 import {
   addHexes,
@@ -108,9 +106,7 @@ export default function GasDisplay({ gasError }) {
     draftTransaction?.asset.details?.standard === TokenStandard.ERC1155
   ) {
     title = draftTransaction?.asset.details?.name;
-  } else if (
-    draftTransaction?.asset.details?.standard === TokenStandard.ERC20
-  ) {
+  } else {
     title = `${hexWEIToDecETH(draftTransaction.amount.value)} ${
       draftTransaction?.asset.details?.symbol
     }`;
@@ -122,8 +118,7 @@ export default function GasDisplay({ gasError }) {
 
   const primaryTotalTextOverrideMaxAmount = `${title} + ${ethTransactionTotalMaxAmount} ${nativeCurrency}`;
 
-  const showCurrencyRateCheck =
-    useCurrencyRateCheck && (!isTestnet || showFiatInTestnets);
+  const showCurrencyRateCheck = useCurrencyRateCheck && isMainnet;
 
   let detailTotal, maxAmount;
 
@@ -136,23 +131,21 @@ export default function GasDisplay({ gasError }) {
         className="gas-display__total-value"
       >
         <LoadingHeartBeat estimateUsed={transactionData?.userFeeLevel} />
-        <UserPreferencedCurrencyDisplay
-          type={PRIMARY}
+        <CurrencyAssetDisplay
           key="total-detail-value"
           value={hexTransactionTotal}
-          hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+          provider={provider}
         />
       </Box>
     );
     maxAmount = (
-      <UserPreferencedCurrencyDisplay
-        type={PRIMARY}
+      <CurrencyAssetDisplay
         key="total-max-amount"
         value={addHexes(
           draftTransaction.amount.value,
           hexMaximumTransactionFee,
         )}
-        hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+        provider={provider}
       />
     );
   } else if (useNativeCurrencyAsPrimaryCurrency) {
@@ -223,10 +216,9 @@ export default function GasDisplay({ gasError }) {
               detailTotal={
                 <Box className="gas-display__currency-container">
                   <LoadingHeartBeat estimateUsed={estimateUsed} />
-                  <UserPreferencedCurrencyDisplay
-                    type={PRIMARY}
+                  <CurrencyAssetDisplay
                     value={hexMinimumTransactionFee}
-                    hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+                    provider={provider}
                   />
                 </Box>
               }
@@ -251,11 +243,10 @@ export default function GasDisplay({ gasError }) {
                       className="gas-display__currency-container"
                     >
                       <LoadingHeartBeat estimateUsed={estimateUsed} />
-                      <UserPreferencedCurrencyDisplay
+                      <CurrencyAssetDisplay
                         key="editGasSubTextFeeAmount"
-                        type={PRIMARY}
                         value={hexMaximumTransactionFee}
-                        hideLabel={!useNativeCurrencyAsPrimaryCurrency}
+                        provider={provider}
                       />
                     </Box>
                   </Box>

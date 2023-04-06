@@ -11,6 +11,7 @@ export default function AccountModalContainer(props, context) {
     backButtonAction,
     hideModal,
     children,
+    image,
   } = props;
 
   return (
@@ -20,7 +21,11 @@ export default function AccountModalContainer(props, context) {
     >
       <div className="account-modal__container">
         <div>
-          <Identicon address={selectedIdentity.address} diameter={64} />
+          <Identicon
+            address={selectedIdentity.address}
+            image={image}
+            diameter={64}
+          />
         </div>
         {showBackButton && (
           <div className="account-modal__back" onClick={backButtonAction}>
@@ -45,6 +50,7 @@ AccountModalContainer.defaultProps = {
   showBackButton: false,
   children: null,
   backButtonAction: undefined,
+  image: undefined,
 };
 
 AccountModalContainer.propTypes = {
@@ -54,4 +60,5 @@ AccountModalContainer.propTypes = {
   backButtonAction: PropTypes.func,
   hideModal: PropTypes.func.isRequired,
   children: PropTypes.node,
+  image: PropTypes.string,
 };

@@ -253,7 +253,7 @@ export default class PreferencesController {
 
     const identities = addresses.reduce((ids, address, index) => {
       const oldId = oldIdentities[address] || {};
-      ids[address] = { name: `Account ${index + 1}`, address, ...oldId };
+      ids[address] = { name: `Wallet ${index + 1}`, address, ...oldId };
       return ids;
     }, {});
 
@@ -299,7 +299,7 @@ export default class PreferencesController {
       // add missing identity
       const identityCount = Object.keys(identities).length;
 
-      identities[address] = { name: `Account ${identityCount + 1}`, address };
+      identities[address] = { name: `Wallet ${identityCount + 1}`, address };
     });
     this.store.updateState({ identities });
   }

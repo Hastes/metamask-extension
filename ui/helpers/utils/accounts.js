@@ -11,7 +11,7 @@ export function getAccountNameErrorMessage(
   );
 
   const localizedWordForAccount = context
-    .t('newAccountNumberName')
+    .t('newWalletNumberName')
     .replace(' $1', '');
 
   // Match strings starting with ${localizedWordForAccount} and then any numeral, case insensitive

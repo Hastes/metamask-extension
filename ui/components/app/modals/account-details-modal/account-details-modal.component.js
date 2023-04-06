@@ -4,8 +4,8 @@ import { getAccountLink } from '@metamask/etherscan-link';
 
 import AccountModalContainer from '../account-modal-container';
 import QrView from '../../../ui/qr-code';
-import EditableLabel from '../../../ui/editable-label';
 import Button from '../../../ui/button';
+import { Text } from '../../../component-library';
 import { getURLHostName } from '../../../../helpers/utils/util';
 import { isHardwareKeyring } from '../../../../helpers/utils/hardware';
 import {
@@ -13,19 +13,23 @@ import {
   EVENT_NAMES,
 } from '../../../../../shared/constants/metametrics';
 import { NETWORKS_ROUTE } from '../../../../helpers/constants/routes';
+import { TextVariant } from '../../../../helpers/constants/design-system';
 
 export default class AccountDetailsModal extends Component {
+  static defaultProps = {
+    token: null,
+  };
+
   static propTypes = {
     selectedIdentity: PropTypes.object,
     chainId: PropTypes.string,
     showExportPrivateKeyModal: PropTypes.func,
-    setAccountLabel: PropTypes.func,
     keyrings: PropTypes.array,
     rpcPrefs: PropTypes.object,
-    accounts: PropTypes.array,
     history: PropTypes.object,
     hideModal: PropTypes.func,
     blockExplorerLinkText: PropTypes.object,
+    token: PropTypes.object,
   };
 
   static contextTypes = {
@@ -38,14 +42,19 @@ export default class AccountDetailsModal extends Component {
       selectedIdentity,
       chainId,
       showExportPrivateKeyModal,
-      setAccountLabel,
       keyrings,
       rpcPrefs,
       history,
       hideModal,
       blockExplorerLinkText,
+      token,
     } = this.props;
-    const { name, address } = selectedIdentity;
+    const { name } = selectedIdentity;
+    let { address } = selectedIdentity;
+
+    if (token) {
+      address = token.owner;
+    }
 
     const keyring = keyrings.find((kr) => {
       return kr.accounts.includes(address);
@@ -79,13 +88,13 @@ export default class AccountDetailsModal extends Component {
     };
 
     return (
-      <AccountModalContainer className="account-details-modal">
-        <EditableLabel
-          className="account-details-modal__name"
-          defaultValue={name}
-          onSubmit={(label) => setAccountLabel(address, label)}
-          accounts={this.props.accounts}
-        />
+      <AccountModalContainer
+        image={token?.image}
+        className="account-details-modal"
+      >
+        <Text variant={TextVariant.bodyLgMedium} as="p" marginBottom={5}>
+          {name}
+        </Text>
 
         <QrView
           Qr={{

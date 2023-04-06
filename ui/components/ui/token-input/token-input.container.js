@@ -20,8 +20,9 @@ const TokenInputContainer = connect(mapStateToProps)(TokenInput);
 
 TokenInputContainer.propTypes = {
   token: PropTypes.shape({
-    address: PropTypes.string.isRequired,
-    decimals: PropTypes.number,
+    provider: PropTypes.object.isRequired,
+    account: PropTypes.string,
+    balance: PropTypes.string,
     symbol: PropTypes.string,
   }).isRequired,
 };

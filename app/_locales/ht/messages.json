@@ -325,7 +325,7 @@
   "newAccount": {
     "message": "Nouvo Kont"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Kont $1",
     "description": "Default name of next account to be created on create account screen"
   },

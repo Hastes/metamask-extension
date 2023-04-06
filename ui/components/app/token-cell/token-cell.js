@@ -40,6 +40,7 @@ export default function TokenCell({
   ) : null;
   return (
     <AssetListItem
+      onClick={onClick}
       className={classnames('token-cell', {
         'token-cell--outdated': Boolean(balanceError),
       })}

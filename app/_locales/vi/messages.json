@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Tài khoản mới"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Tài khoản $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Gửi lời chào đến ví của bạn"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Bắt đầu nào"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "Được hàng triệu người tin dùng, MetaMask là một ví an toàn cho phép mọi người có thể truy cập vào thế giới web3."
   },
   "whatsNew": {

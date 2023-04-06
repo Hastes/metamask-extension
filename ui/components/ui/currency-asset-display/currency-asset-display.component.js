@@ -3,14 +3,18 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { Numeric } from '../../../../shared/modules/Numeric';
 
+import { ChainProvider } from '../../../../app/scripts/controllers/network/chain-provider';
+
 export default function CurrencyAssetDisplay({
   value,
   style,
   className,
-  asset,
+  provider,
 }) {
+  const cp = new ChainProvider(provider);
+
   const amountString = new Numeric(value, 16)
-    .shiftedBy(asset.decimals || 2)
+    .shiftedBy(cp.decimals || 2)
     .toBase(10)
     .toString();
 
@@ -21,7 +25,7 @@ export default function CurrencyAssetDisplay({
       title="test"
     >
       <span className="currency-display-component__text">{amountString}</span>
-      <span className="currency-display-component__suffix">{asset.symbol}</span>
+      <span className="currency-display-component__suffix">{cp.symbol}</span>
     </div>
   );
 }
@@ -30,5 +34,5 @@ CurrencyAssetDisplay.propTypes = {
   className: PropTypes.string,
   style: PropTypes.object,
   value: PropTypes.string.isRequired,
-  asset: PropTypes.object.isRequired,
+  provider: PropTypes.object.isRequired,
 };

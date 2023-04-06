@@ -295,21 +295,21 @@ class SettingsPage extends PureComponent {
         icon: <Icon name={ICON_NAMES.NOTIFICATION} />,
         key: ALERTS_ROUTE,
       },
-      {
-        content: t('networks'),
-        icon: <i className="fa fa-plug" />,
-        key: NETWORKS_ROUTE,
-      },
-      {
-        content: t('experimental'),
-        icon: <i className="fa fa-flask" />,
-        key: EXPERIMENTAL_ROUTE,
-      },
-      {
-        content: t('about'),
-        icon: <i className="fa fa-info-circle" />,
-        key: ABOUT_US_ROUTE,
-      },
+      // {
+      //   content: t('networks'),
+      //   icon: <i className="fa fa-plug" />,
+      //   key: NETWORKS_ROUTE,
+      // },
+      // {
+      //   content: t('experimental'),
+      //   icon: <i className="fa fa-flask" />,
+      //   key: EXPERIMENTAL_ROUTE,
+      // },
+      // {
+      //   content: t('about'),
+      //   icon: <i className="fa fa-info-circle" />,
+      //   key: ABOUT_US_ROUTE,
+      // },
     ];
 
     return (

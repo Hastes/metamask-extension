@@ -70,11 +70,7 @@ export default function NetworkDisplay({
           <Icon name={ICON_NAMES.ARROW_DOWN} size={ICON_SIZES.XS} />
         ) : null
       }
-      label={
-        networkType === NETWORK_TYPES.RPC
-          ? nickname ?? t('privateNetwork')
-          : t(networkType)
-      }
+      label={nickname}
       className={classnames('network-display', {
         'network-display--disabled': disabled,
         'network-display--clickable': typeof onClick === 'function',

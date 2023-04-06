@@ -30,7 +30,6 @@ import {
 import { ControllerMessenger } from '@metamask/base-controller';
 import { PhishingController } from '@metamask/phishing-controller';
 import { AnnouncementController } from '@metamask/announcement-controller';
-import { GasFeeController } from '@metamask/gas-fee-controller';
 import {
   PermissionController,
   PermissionsRequestNotFoundError,
@@ -106,6 +105,7 @@ import {
   AssetsContractController,
   NftDetectionController,
 } from '../overrided-metamask/assets-controllers';
+import { GasFeeController } from '../overrided-metamask/gas-fee-controller';
 
 import { isEqualCaseInsensitive } from '../../shared/modules/string-utils';
 import { parseStandardTokenTransactionData } from '../../shared/modules/transaction.utils';
@@ -2307,6 +2307,7 @@ export default class MetamaskController extends EventEmitter {
         const addresses = await this.keyringController.getAccounts();
         this.preferencesController.setAddresses(addresses);
         this.selectFirstIdentity();
+        this.initAccounts();
       }
 
       return vault;
@@ -2400,6 +2401,7 @@ export default class MetamaskController extends EventEmitter {
       // set new identities
       this.preferencesController.setAddresses(accounts);
       this.selectFirstIdentity();
+      this.initAccounts();
       return vault;
     } finally {
       releaseLock();
@@ -2926,6 +2928,7 @@ export default class MetamaskController extends EventEmitter {
       });
 
       const { identities } = this.preferencesController.store.getState();
+      this.initAccounts();
       return { ...keyState, identities };
     }
 

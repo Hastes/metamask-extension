@@ -923,7 +923,7 @@
   "newAccount": {
     "message": "新帳戶"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "帳戶 $1",
     "description": "Default name of next account to be created on create account screen"
   },

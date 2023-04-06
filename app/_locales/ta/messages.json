@@ -268,7 +268,7 @@
   "newAccount": {
     "message": "புதிய கணக்கு"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "கணக்கு $1",
     "description": "Default name of next account to be created on create account screen"
   },

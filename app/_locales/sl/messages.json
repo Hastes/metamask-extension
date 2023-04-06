@@ -464,7 +464,7 @@
   "newAccount": {
     "message": "Nov račun"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Račun $1",
     "description": "Default name of next account to be created on create account screen"
   },

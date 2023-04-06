@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "Akun baru"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Akun $1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "Ucapkan halo pada dompet Anda"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "Mari kita mulai"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "MetaMask merupakan dompet aman yang dipercaya oleh jutaan orang, yang membuat dunia web3 dapat diakses oleh semua orang."
   },
   "whatsNew": {

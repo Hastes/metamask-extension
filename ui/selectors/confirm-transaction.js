@@ -29,7 +29,11 @@ import {
   sumHexes,
 } from '../../shared/modules/conversion.utils';
 import { getAveragePriceEstimateInHexWEI } from './custom-gas';
-import { getCurrentChainId, deprecatedGetCurrentNetworkId } from './selectors';
+import {
+  getCurrentChainId,
+  deprecatedGetCurrentNetworkId,
+  getCurrentCurrency,
+} from './selectors';
 import { checkNetworkAndAccountSupports1559 } from '.';
 
 const unapprovedTxsSelector = (state) => state.metamask.unapprovedTxs;
@@ -98,9 +102,9 @@ export const unconfirmedTransactionsHashSelector = createSelector(
         const transactions = { ...acc };
 
         // if (
-          // transactionMatchesNetwork(unapprovedTxs[address], chainId, network)
+        // transactionMatchesNetwork(unapprovedTxs[address], chainId, network)
         // ) {
-          transactions[address] = unapprovedTxs[address];
+        transactions[address] = unapprovedTxs[address];
         // }
 
         return transactions;
@@ -258,7 +262,8 @@ export const contractExchangeRateSelector = createSelector(
 export const transactionFeeSelector = function (state, txData) {
   const currentCurrency = currentCurrencySelector(state);
   const conversionRate = conversionRateSelector(state);
-  const nativeCurrency = getNativeCurrency(state);
+  const nativeCurrency =
+    txData.txParams?.assetDetails?.symbol || getCurrentCurrency(state);
   const gasFeeEstimates = getGasFeeEstimates(state) || {};
   const gasEstimateType = getGasEstimateType(state);
   const networkAndAccountSupportsEIP1559 =

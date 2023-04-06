@@ -476,7 +476,7 @@
   "newAccount": {
     "message": "Uusi tili"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "Tili $1",
     "description": "Default name of next account to be created on create account screen"
   },

@@ -2149,7 +2149,7 @@
   "newAccount": {
     "message": "新しいアカウント"
   },
-  "newAccountNumberName": {
+  "newWalletNumberName": {
     "message": "アカウント$1",
     "description": "Default name of next account to be created on create account screen"
   },
@@ -4483,10 +4483,10 @@
   "welcomeLoginTitle": {
     "message": "ウォレットにようこそ"
   },
-  "welcomeToMetaMask": {
+  "welcomeToDexTrade": {
     "message": "始めましょう"
   },
-  "welcomeToMetaMaskIntro": {
+  "welcomeToDexTradeIntro": {
     "message": "MetaMaskは何百万人もに信頼されている安全なウォレットで、すべての人々によるWeb3の世界へのアクセスを可能にしています。"
   },
   "whatsNew": {

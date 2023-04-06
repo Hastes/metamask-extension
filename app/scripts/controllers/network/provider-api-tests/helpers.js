@@ -423,6 +423,15 @@ export function getProvider({
   return provider;
 }
 
+export function getEthQueryFromProviderConfig(providerConfig) {
+  const buildedProvider = getProvider({
+    providerType: 'custom',
+    customRpcUrl: providerConfig.rpcUrl,
+    customChainId: providerConfig.chainId,
+  });
+  return new EthQuery(buildedProvider);
+}
+
 /**
  * Build mock parameters for a JSON-RPC call.
  *

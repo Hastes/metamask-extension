@@ -4,6 +4,7 @@ import {
   ENVIRONMENT_TYPE_POPUP,
   ENVIRONMENT_TYPE_NOTIFICATION,
 } from '../../../../../shared/constants/app';
+import { NETWORK_TO_NAME_MAP } from '../../../../../shared/constants/network';
 import { getEnvironmentType } from '../../../../../app/scripts/lib/util';
 import NetworkDisplay from '../../network-display';
 import Identicon from '../../../ui/identicon';
@@ -18,6 +19,7 @@ export default function ConfirmPageContainerHeader({
   accountAddress,
   showAccountInHeader,
   children,
+  provider,
 }) {
   const t = useI18nContext();
   const windowType = getEnvironmentType();
@@ -64,7 +66,14 @@ export default function ConfirmPageContainerHeader({
             </span>
           </div>
         )}
-        {isFullScreen ? null : <NetworkDisplay />}
+        {isFullScreen ? null : (
+          <NetworkDisplay
+            targetNetwork={{
+              nickname: NETWORK_TO_NAME_MAP[provider.chainId],
+              type: provider.type,
+            }}
+          />
+        )}
       </div>
       {children}
     </div>
@@ -77,4 +86,9 @@ ConfirmPageContainerHeader.propTypes = {
   showEdit: PropTypes.bool,
   onEdit: PropTypes.func,
   children: PropTypes.node,
+  provider: PropTypes.object,
+};
+
+ConfirmPageContainerHeader.defaultProps = {
+  provider: undefined,
 };
