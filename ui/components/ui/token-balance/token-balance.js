@@ -19,7 +19,7 @@ export default function TokenBalance({ className, token }) {
 TokenBalance.propTypes = {
   className: PropTypes.string,
   token: PropTypes.shape({
-    address: PropTypes.string.isRequired,
+    address: PropTypes.string,
     decimals: PropTypes.number,
     symbol: PropTypes.string,
   }).isRequired,

@@ -2897,45 +2897,22 @@ export default class MetamaskController extends EventEmitter {
   //
 
   /**
-   * Adds a new account to the default (first) HD seed phrase Keyring.
+   * Create keyring with new mnemonic
    *
-   * @param accountCount
    * @returns {} keyState
    */
-  async addNewAccount(accountCount) {
-    const [primaryKeyring] = this.keyringController.getKeyringsByType(
+  async addNewAccount() {
+    const primaryKeyring = await this.keyringController.addNewKeyring(
       KeyringType.hdKeyTree,
     );
-    if (!primaryKeyring) {
-      throw new Error('MetamaskController - No HD Key Tree found');
-    }
-    const { keyringController } = this;
-    const { identities: oldIdentities } =
-      this.preferencesController.store.getState();
+    const [createdWalletAccount] = await primaryKeyring.getAccounts();
+    const allAccounts = await this.keyringController.getAccounts();
+    this.preferencesController.setAddresses(allAccounts);
+    this.preferencesController.setSelectedAddress(createdWalletAccount);
 
-    if (Object.keys(oldIdentities).length === accountCount) {
-      const oldAccounts = await keyringController.getAccounts();
-      const keyState = await keyringController.addNewAccount(primaryKeyring);
-      const newAccounts = await keyringController.getAccounts();
-
-      await this.verifySeedPhrase();
-
-      this.preferencesController.setAddresses(newAccounts);
-      newAccounts.forEach((address) => {
-        if (!oldAccounts.includes(address)) {
-          this.preferencesController.setSelectedAddress(address);
-        }
-      });
-
-      const { identities } = this.preferencesController.store.getState();
-      this.initAccounts();
-      return { ...keyState, identities };
-    }
-
-    return {
-      ...keyringController.memStore.getState(),
-      identities: oldIdentities,
-    };
+    const { identities } = this.preferencesController.store.getState();
+    this.initAccounts();
+    return { ...this.keyringController.memStore.getState(), identities };
   }
 
   /**
@@ -2949,17 +2926,18 @@ export default class MetamaskController extends EventEmitter {
    * encoded as an array of UTF-8 bytes.
    */
   async verifySeedPhrase() {
-    const [primaryKeyring] = this.keyringController.getKeyringsByType(
-      KeyringType.hdKeyTree,
+    const selectedAddress = this.preferencesController.getSelectedAddress();
+    const keyring = await this.keyringController.getKeyringForAccount(
+      selectedAddress,
     );
-    if (!primaryKeyring) {
+    if (!keyring) {
       throw new Error('MetamaskController - No HD Key Tree found');
     }
 
-    const serialized = await primaryKeyring.serialize();
+    const serialized = await keyring.serialize();
     const seedPhraseAsBuffer = Buffer.from(serialized.mnemonic);
 
-    const accounts = await primaryKeyring.getAccounts();
+    const accounts = await keyring.getAccounts();
     if (accounts.length < 1) {
       throw new Error('MetamaskController - No accounts found');
     }
@@ -4413,28 +4391,41 @@ export default class MetamaskController extends EventEmitter {
   async initAccounts() {
     const providers = [
       {
-        chainId: CHAIN_IDS.BTC,
-        type: NETWORK_TYPES.BITCOIN,
-        rpcUrl: null,
+        chainId: CHAIN_IDS.MAINNET,
+        type: NETWORK_TYPES.MAINNET,
       },
       {
-        chainId: CHAIN_IDS.BINANCE_CHAIN,
-        type: NETWORK_TYPES.BINANCE_CHAIN,
-        rpcUrl: null,
+        chainId: CHAIN_IDS.BTC_TESTNET,
+        type: NETWORK_TYPES.BITCOIN,
       },
+      // {
+      //   chainId: CHAIN_IDS.BINANCE_CHAIN,
+      //   type: NETWORK_TYPES.BINANCE_CHAIN,
+      // },
       {
         chainId: CHAIN_IDS.BSC_TESTNET,
         type: NETWORK_TYPES.RPC,
-        rpcUrl: 'https://data-seed-prebsc-2-s2.binance.org:8545',
-        symbol: 'tBNB',
+        symbol: 'BNB',
       },
       {
-        chainId: CHAIN_IDS.TRON,
+        chainId: CHAIN_IDS.TRON_TESTNET,
         type: NETWORK_TYPES.TRON,
-        rpcUrl: null,
       },
+      {
+        chainId: CHAIN_IDS.TRON_TESTNET,
+        type: NETWORK_TYPES.TRON,
+        contract: 'TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs',
+        symbol: 'USDT',
+        decimals: 6,
+      },
+      // {
+      //   chainId: CHAIN_IDS.TRON,
+      //   type: NETWORK_TYPES.TRON,
+      //   contract: 'TVSvjZdyDSNocHm7dP3jvCmMNsCnMTPa5W',
+      //   symbol: 'BTT',
+      //   decimals: 18,
+      // },
     ];
-
     const tokens = await Promise.all(
       providers.map((p) => this.tokensController.addToken(p)),
     );

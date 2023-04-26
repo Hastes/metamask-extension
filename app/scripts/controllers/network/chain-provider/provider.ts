@@ -1,36 +1,43 @@
-import HdKeyring from '@metamask/eth-hd-keyring';
+import BN from 'bn.js';
+import { HDKey } from 'ethereum-cryptography/hdkey';
 
-import contractsMap from '@metamask/contract-metadata';
-
+import { stripHexPrefix } from '../../../../../shared/modules/hexstring-utils';
 import {
-  toChecksumHexAddress,
-  ERC721_INTERFACE_ID,
-} from '@metamask/controller-utils';
+  NETWORK_TYPES,
+  CHAIN_IDS,
+  TEST_CHAINS,
+} from '../../../../../shared/constants/network';
 
-import { NETWORK_TYPES } from '../../../../../shared/constants/network';
-
-import {
-  fetchTokenMetadata,
-  TOKEN_METADATA_NO_SUPPORT_ERROR,
-} from '../../../../overrided-metamask/assets-controllers/token-service';
-import { formatIconUrlWithProxy } from '../../../../overrided-metamask/assets-controllers/assetsUtil';
-import { TokenListToken } from '../../../../overrided-metamask/assets-controllers/TokenListController';
-import { ProviderConfig } from './index.d';
+import { ProviderConfig, ChainAccount, Fee } from './index.d';
 import ChainBinance from './chain-binance';
 import ChainTron from './chain-tron';
 import ChainBitcoin from './chain-bitcoin';
 import ChainEth from './chain-eth';
+import ChainBsc from './chain-bsc';
+
+const _hexToBn = (v: string) => {
+  return new BN(stripHexPrefix(v), 16);
+};
 
 export class ChainProvider {
   readonly provider: ProviderConfig;
 
   readonly chain: ChainBinance | ChainBitcoin | ChainTron | ChainEth;
 
-  readonly iconUrl: string;
+  readonly nativeDecimals: number;
+
+  readonly nativeSymbol: string;
+
+  account: ChainAccount | null = null;
 
   isERC721 = false;
 
   constructor(provider: ProviderConfig) {
+    const CHAIN_BY_ID = {
+      [CHAIN_IDS.BSC]: ChainBsc,
+      [CHAIN_IDS.BSC_TESTNET]: ChainBsc,
+    };
+
     const CHAIN_BY_NETWORK = {
       [NETWORK_TYPES.MAINNET]: ChainEth,
       [NETWORK_TYPES.GOERLI]: ChainEth,
@@ -43,16 +50,23 @@ export class ChainProvider {
       [NETWORK_TYPES.BITCOIN]: ChainBitcoin,
     };
 
+    const isTestnet = TEST_CHAINS.some(
+      (chainId: string) => chainId === provider.chainId,
+    );
+
     this.provider = provider;
 
-    const ChainClass = CHAIN_BY_NETWORK[provider.type];
+    const ChainClass =
+      (CHAIN_BY_ID as any)[provider.chainId] || CHAIN_BY_NETWORK[provider.type];
 
     if (!ChainClass) {
       throw new Error(`Provider type ${provider.type} not implemented`);
     }
 
-    this.chain = new ChainClass(provider);
-    this.iconUrl = this.detectIconUrl();
+    this.chain = new ChainClass(provider, isTestnet);
+
+    this.nativeDecimals = this.chain.defaultDecimals;
+    this.nativeSymbol = this.chain.defaultSymbol;
   }
 
   get symbol(): string {
@@ -63,85 +77,81 @@ export class ChainProvider {
     return this.provider.decimals || this.chain.defaultDecimals;
   }
 
-  getBalance(address: string, decimals: number) {
-    return this.chain.getBalance(address, decimals);
+  get iconUrl(): string {
+    if (this.provider.iconUrl) {
+      return this.provider.iconUrl;
+    }
+    if (this.provider.contract) {
+      if ('detectIconUrl' in this.chain) {
+        return this.chain.detectIconUrl();
+      }
+      return `https://cryptoicons.org/api/icon/${this.symbol.toLowerCase()}/200`;
+    }
+    return this.chain.defaultIconUrl;
   }
 
-  getAccount(keyring: typeof HdKeyring) {
-    return this.chain.getAccount(keyring);
+  async getBalance(address: string): Promise<BN> {
+    const result = await this.chain.getBalance(address);
+    const bn = new BN(result);
+    return bn;
+  }
+
+  getAccount(hdKey: HDKey): { address: string; privateKey?: string } {
+    return this.chain.getAccount(hdKey);
   }
 
   isAddress(address: string) {
     return this.chain.isAddress(address);
   }
 
-  async simpleSend(keyring: typeof HdKeyring, to: string, amount: string) {
-    return this.chain.simpleSend(keyring, to, amount);
-  }
-
-  /**
-   * Fetch metadata for a token.
-   *
-   * @param abortSignal - signal object from TokenProvider
-   */
-  async fetchTokenMetadata(): Promise<TokenListToken | undefined> {
-    if (!this.provider.contract) {
-      return undefined;
+  async getFee(
+    toAddress: string,
+    amountHex: string,
+  ): Promise<{
+    maxValue?: BN;
+    minValue?: BN;
+    bandwidth?: BN;
+    energy?: BN;
+  }> {
+    if (!this.account) {
+      throw new Error('Use setHdKey() before sending');
     }
-    try {
-      const token = await fetchTokenMetadata<TokenListToken>(
-        this.provider.chainId,
+    if ('getFee' in this.chain) {
+      const bnAmount = _hexToBn(amountHex);
+
+      const feeParams = await this.chain.getFee(
+        this.account,
+        toAddress,
+        bnAmount,
       );
-      debugger;
-      return token;
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes(TOKEN_METADATA_NO_SUPPORT_ERROR)
-      ) {
-        return undefined;
-      }
-      throw error;
+      const bnFeeParams = Object.entries(feeParams).reduce(
+        (acc, [key, value]) => ({
+          ...acc,
+          [key]: new BN(value),
+        }),
+        {},
+      );
+      return bnFeeParams;
     }
+    throw new Error('not implemented getFee method');
   }
 
-  /**
-   * Detects whether or not a token is ERC-721 compatible.
-   *
-   * @returns A boolean indicating whether the token address passed in supports the EIP-721
-   * interface.
-   */
-  async detectIsERC721(): Promise<boolean> {
-    if (!this.provider.contract) {
-      return false;
+  async simpleSend(to: string, amountHex: string, fee?: Fee) {
+    if (!this.account) {
+      throw new Error('Use setHdKey() before sending');
     }
-    const checksumAddress = toChecksumHexAddress(this.provider.contract);
-    // if this token is already in our contract metadata map we don't need
-    // to check against the contract
-    if (contractsMap[checksumAddress]?.erc721 === true) {
-      return Promise.resolve(true);
-    } else if (contractsMap[checksumAddress]?.erc20 === true) {
-      return Promise.resolve(false);
-    }
+    const bnAmount = _hexToBn(amountHex);
 
-    try {
-      return await this.chain.contract.supportsInterface(ERC721_INTERFACE_ID);
-    } catch (error: any) {
-      // currently we see a variety of errors across different networks when
-      // token contracts are not ERC721 compatible. We need to figure out a better
-      // way of differentiating token interface types but for now if we get an error
-      // we have to assume the token is not ERC721 compatible.
-      return false;
-    }
+    return this.chain.simpleSend(this.account, to, bnAmount, fee);
   }
 
-  private detectIconUrl() {
-    if (!this.provider.contract) {
-      return this.chain.defaultIconUrl;
-    }
-    return formatIconUrlWithProxy({
-      chainId: this.provider.chainId,
-      tokenAddress: this.provider.contract,
-    });
+  setHdKey(hdKey: HDKey) {
+    const { address, privateKey } = this.getAccount(hdKey);
+    this.account = {
+      address,
+      hdKey,
+      privateKey,
+    };
+    return this.account;
   }
 }

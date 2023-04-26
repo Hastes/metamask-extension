@@ -75,6 +75,8 @@ export default class ConfirmTransactionBase extends Component {
 
   static defaultProps = {
     assetDetails: null,
+    bandwidth: undefined,
+    energy: undefined,
   };
 
   static propTypes = {
@@ -91,6 +93,8 @@ export default class ConfirmTransactionBase extends Component {
     hexTransactionAmount: PropTypes.string,
     hexMinimumTransactionFee: PropTypes.string,
     hexMaximumTransactionFee: PropTypes.string,
+    bandwidth: PropTypes.string,
+    energy: PropTypes.string,
     hexTransactionTotal: PropTypes.string,
     methodData: PropTypes.object,
     nonce: PropTypes.string,
@@ -261,12 +265,12 @@ export default class ConfirmTransactionBase extends Component {
       };
     }
 
-    if (hexToDecimal(customGas.gasLimit) < Number(MIN_GAS_LIMIT_DEC)) {
-      return {
-        valid: false,
-        errorKey: GAS_LIMIT_TOO_LOW_ERROR_KEY,
-      };
-    }
+    // if (hexToDecimal(customGas.gasLimit) < Number(MIN_GAS_LIMIT_DEC)) {
+    //   return {
+    //     valid: false,
+    //     errorKey: GAS_LIMIT_TOO_LOW_ERROR_KEY,
+    //   };
+    // }
 
     if (noGasPrice && !gasFeeIsCustom) {
       return {
@@ -337,6 +341,9 @@ export default class ConfirmTransactionBase extends Component {
       nativeCurrency,
       isBuyableChain,
       useCurrencyRateCheck,
+      assetDetails,
+      bandwidth,
+      energy,
     } = this.props;
     const { t } = this.context;
     const { userAcknowledgedGasMissing } = this.state;
@@ -353,7 +360,6 @@ export default class ConfirmTransactionBase extends Component {
     const networkName = NETWORK_TO_NAME_MAP[txData.chainId];
 
     const renderTotalMaxAmount = () => {
-      const { assetDetails } = this.props;
       if (
         primaryTotalTextOverrideMaxAmount === undefined &&
         secondaryTotalTextOverride === undefined
@@ -375,7 +381,6 @@ export default class ConfirmTransactionBase extends Component {
     };
 
     const renderTotalDetailTotal = () => {
-      const { assetDetails } = this.props;
       if (
         primaryTotalTextOverride === undefined &&
         secondaryTotalTextOverride === undefined
@@ -449,7 +454,6 @@ export default class ConfirmTransactionBase extends Component {
     ) : null;
 
     const renderGasDetailsItem = () => {
-      const { assetDetails } = this.props;
       return this.supportsEIP1559 ? (
         <GasDetailsItem
           key="gas_details"
@@ -591,7 +595,7 @@ export default class ConfirmTransactionBase extends Component {
           type={txData.type}
           isBuyableChain={isBuyableChain}
         />
-        {txData.isTrc20 ? null : (
+        {txData.isEthTypeNetwork ? (
           <TransactionDetail
             disabled={isDisabled()}
             userAcknowledgedGasMissing={userAcknowledgedGasMissing}
@@ -604,7 +608,7 @@ export default class ConfirmTransactionBase extends Component {
               renderSimulationFailureWarning && simulationFailureWarning(),
               !renderSimulationFailureWarning &&
                 !isMultiLayerFeeNetwork &&
-                !txData.isTrc20 &&
+                txData.isEthTypeNetwork &&
                 renderGasDetailsItem(),
               !renderSimulationFailureWarning && isMultiLayerFeeNetwork && (
                 <MultiLayerFeeMessage
@@ -633,6 +637,78 @@ export default class ConfirmTransactionBase extends Component {
                   }
                 />
               ),
+            ]}
+          />
+        ) : (
+          <TransactionDetail
+            disabled={isDisabled()}
+            rows={[
+              energy !== undefined && (
+                <TransactionDetailItem
+                  key="energy"
+                  detailTitle="Energy"
+                  subTitle="Your balance"
+                  detailTotal={<div>{parseInt(energy, 16)}</div>}
+                />
+              ),
+              bandwidth !== undefined && (
+                <TransactionDetailItem
+                  key="bandwidth"
+                  detailTitle="BandWidth"
+                  subTitle="Your balance"
+                  detailTotal={<div>{parseInt(bandwidth, 16)}</div>}
+                />
+              ),
+              hexMinimumTransactionFee && (
+                <TransactionDetailItem
+                  key="min-fee"
+                  detailTitle="Fee"
+                  detailTotal={
+                    <div>
+                      <CurrencyAssetDisplay
+                        value={hexMinimumTransactionFee}
+                        provider={assetDetails.provider}
+                        native
+                      />
+                    </div>
+                  }
+                />
+              ),
+              hexMaximumTransactionFee && (
+                <TransactionDetailItem
+                  key="max-fee"
+                  detailTitle="Max fee"
+                  subTitle="Estimated"
+                  detailTotal={
+                    <div>
+                      <CurrencyAssetDisplay
+                        value={hexMaximumTransactionFee}
+                        provider={assetDetails.provider}
+                        native
+                      />
+                    </div>
+                  }
+                />
+              ),
+              <TransactionDetailItem
+                key="total-item"
+                detailTitle={t('total')}
+                detailText={useCurrencyRateCheck && renderTotalDetailText()}
+                detailTotal={renderTotalDetailTotal()}
+                subText={
+                  <>
+                    {!assetDetails.provider.contract &&
+                      hexMaximumTransactionFee && (
+                        <div className="confirm-page-container-content__total-amount">
+                          <strong key="editGasSubTextAmountLabel">
+                            {t('editGasSubTextAmountLabel')}
+                          </strong>{' '}
+                          {renderTotalMaxAmount()}
+                        </div>
+                      )}
+                  </>
+                }
+              />,
             ]}
           />
         )}
@@ -847,9 +923,6 @@ export default class ConfirmTransactionBase extends Component {
 
   renderTitleComponent() {
     const { title, hexTransactionAmount, txData, assetDetails } = this.props;
-    const isEthType = [NETWORK_TYPES.MAINNET, NETWORK_TYPES.RPC].includes(
-      assetDetails.provider.type,
-    );
 
     // Title string passed in by props takes priority
     if (title) {
@@ -858,7 +931,7 @@ export default class ConfirmTransactionBase extends Component {
     // const isContractInteraction =
     //   txData.type === TransactionType.contractInteraction;
 
-    if (isEthType) {
+    if (txData.isEthTypeNetwork) {
       return (
         <CurrencyAssetDisplay
           value={hexTransactionAmount}

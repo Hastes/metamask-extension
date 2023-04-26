@@ -1,6 +1,8 @@
 import abi from 'ethereumjs-abi';
+import TronWeb from 'tronweb';
 
 import { addHexPrefix } from '../../../app/scripts/lib/util';
+import { stripHexPrefix } from '../../../shared/modules/hexstring-utils';
 import { TokenStandard } from '../../../shared/constants/transaction';
 import { Numeric } from '../../../shared/modules/Numeric';
 import {
@@ -12,6 +14,7 @@ export {
   addGasBuffer,
   getAssetTransferData,
   generateERC20TransferData,
+  generateTRC20TransferData,
   generateERC721TransferData,
   isBalanceSufficient,
   isTokenBalanceSufficient,
@@ -91,6 +94,12 @@ function generateERC20TransferData({
         (x) => `00${x.toString(16)}`.slice(-2),
       )
       .join('')
+  );
+}
+
+function generateTRC20TransferData({ toAddress, amount }) {
+  return stripHexPrefix(
+    TronWeb.utils.abi.encodeParams(['address', 'uint256'], [toAddress, amount]),
   );
 }
 

@@ -169,8 +169,8 @@ export default class AddRecipient extends Component {
     if (isUsingMyAccountsForRecipientSearch && userInput) {
       ownedAccounts = ownedAccounts.filter(
         (item) =>
-          item.name.toLowerCase().indexOf(userInput.toLowerCase()) > -1 ||
-          item.address.toLowerCase().indexOf(userInput.toLowerCase()) > -1,
+          item.identity.name.toLowerCase().indexOf(userInput.toLowerCase()) > -1 ||
+          item.account.toLowerCase().indexOf(userInput.toLowerCase()) > -1,
       );
     }
 

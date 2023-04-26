@@ -236,6 +236,8 @@ export const getPendingTokens = (state) => state.metamask.pendingTokens;
 
 export const getTokens = (state) => state.metamask.tokens;
 
+export const getAllTokens = (state) => state.metamask.allTokens;
+
 export function getNftsDropdownState(state) {
   return state.metamask.nftsDropdownState;
 }

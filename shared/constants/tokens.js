@@ -1,5 +1,6 @@
-import contractMap from '@metamask/contract-metadata';
 import BigNumber from 'bignumber.js';
+
+import contractMap from '../../app/overrided-metamask/contract-metadata';
 
 /**
  * A normalized list of addresses exported as part of the contractMap in

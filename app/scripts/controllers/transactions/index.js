@@ -60,7 +60,7 @@ import {
 } from '../../../../shared/lib/transactions-controller-utils';
 import { Numeric } from '../../../../shared/modules/Numeric';
 import { getProvider } from '../network/provider-api-tests/helpers';
-import { chainTron } from '../network/chain-provider';
+import { ChainProvider } from '../network/chain-provider';
 import TransactionStateManager from './tx-state-manager';
 import TxGasUtil from './tx-gas-utils';
 import PendingTransactionTracker from './pending-tx-tracker';
@@ -820,8 +820,8 @@ export default class TransactionController extends EventEmitter {
 
     txUtils.validateTxParams(normalizedTxParams, eip1559Compatibility);
 
-    const isTrc20 =
-      normalizedTxParams.assetDetails?.provider.type === NETWORK_TYPES.TRON;
+    const { assetDetails } = normalizedTxParams;
+    const { isEthTypeNetwork } = assetDetails;
 
     /**
      * `generateTxMeta` adds the default txMeta properties to the passed object.
@@ -834,7 +834,7 @@ export default class TransactionController extends EventEmitter {
       origin,
       sendFlowHistory,
       chainId: normalizedTxParams.assetDetails?.provider.chainId,
-      isTrc20,
+      isEthTypeNetwork,
     });
 
     // Add actionId to txMeta to check if same actionId is seen again
@@ -869,7 +869,7 @@ export default class TransactionController extends EventEmitter {
     //   }
     // }
     txMeta.type = transactionType;
-    if (!isTrc20) {
+    if (isEthTypeNetwork) {
       const { type } = await determineTransactionType(
         normalizedTxParams,
         this.query,
@@ -887,12 +887,30 @@ export default class TransactionController extends EventEmitter {
         txMeta.securityProviderResponse = securityProviderResponse;
       }
     }
-
     this.addTransaction(txMeta);
     this.emit('newUnapprovedTx', txMeta);
 
-    if (!isTrc20) {
+    if (isEthTypeNetwork) {
       txMeta = await this.addTransactionGasDefaults(txMeta);
+    } else {
+      const cp = new ChainProvider(assetDetails.provider);
+      const currentAddress = this.getSelectedAddress();
+      const keyring = await this.keyringController.getKeyringForAccount(
+        currentAddress,
+      );
+      cp.setHdKey(keyring.root.deriveChild(0));
+      const feeParams = await cp.getFee(
+        txMeta.txParams.to,
+        txMeta.txParams.value,
+      );
+      const hexedFeeParams = Object.entries(feeParams).reduce(
+        (acc, [key, value]) => ({
+          ...acc,
+          [key]: addHexPrefix(value.toString(16)),
+        }),
+        {},
+      );
+      txMeta.txParams.feeParams = hexedFeeParams;
     }
 
     return txMeta;
@@ -1100,7 +1118,7 @@ export default class TransactionController extends EventEmitter {
    * @returns {Promise<object>} Object containing the default gas limit, or the simulation failure object
    */
   async _getDefaultGasLimit(txMeta) {
-    const chainId = this._getCurrentChainId();
+    const { chainId } = txMeta.txParams.assetDetails.provider;
     const customNetworkGasBuffer = CHAIN_ID_TO_GAS_LIMIT_BUFFER_MAP[chainId];
     const chainType = getChainType(chainId);
 
@@ -1368,7 +1386,6 @@ export default class TransactionController extends EventEmitter {
     // we need to keep track of what is currently being signed,
     // So that we do not increment nonce + resubmit something
     // that is already being incremented & signed.
-    // debugger;
     const txMeta = this.txStateManager.getTransaction(txId);
     if (this.inProcessOfSigning.has(txId)) {
       return;
@@ -1376,6 +1393,12 @@ export default class TransactionController extends EventEmitter {
     this.inProcessOfSigning.add(txId);
     let nonceLock;
     const assetDetails = txMeta.txParams.assetDetails || null;
+    const isEthTypeNetwork =
+      (assetDetails &&
+        [NETWORK_TYPES.MAINNET, NETWORK_TYPES.RPC].includes(
+          assetDetails.provider.type,
+        )) ||
+      !assetDetails;
 
     try {
       // approve
@@ -1387,24 +1410,7 @@ export default class TransactionController extends EventEmitter {
       let { customNonceValue } = txMeta;
       customNonceValue = Number(customNonceValue);
 
-      if (txMeta.isTrc20) {
-        const currentAddress = this.getSelectedAddress();
-        const keyring = await this.keyringController.getKeyringForAccount(
-          currentAddress,
-        );
-        const addressIdx = keyring.getAccounts().indexOf(currentAddress);
-        const { root } = keyring;
-        const hdKey = root.deriveChild(addressIdx);
-
-        await chainTron.simpleSend(hdKey, toAddress, txMeta.txParams.value);
-
-        this.txStateManager.setTxStatusSubmitted(txId);
-        this._trackTransactionMetricsEvent(
-          txMeta,
-          TransactionMetaMetricsEvent.submitted,
-          actionId,
-        );
-      } else {
+      if (isEthTypeNetwork) {
         if (assetDetails) {
           const ethQuery = this.getCustomQuery(assetDetails.provider);
           const nonce = await ethQuery.getTransactionCount(fromAddress);
@@ -1434,7 +1440,6 @@ export default class TransactionController extends EventEmitter {
           'transactions#approveTransaction',
         );
         // sign transaction
-        // debugger;
         const rawTx = await this.signTransaction(txId);
         await this.publishTransaction(txId, rawTx, actionId);
         this._trackTransactionMetricsEvent(
@@ -1446,6 +1451,27 @@ export default class TransactionController extends EventEmitter {
           // must set transaction to submitted/failed before releasing lock
           nonceLock.releaseLock();
         }
+      } else {
+        const cp = new ChainProvider(assetDetails.provider);
+        const currentAddress = this.getSelectedAddress();
+        const keyring = await this.keyringController.getKeyringForAccount(
+          currentAddress,
+        );
+
+        cp.setHdKey(keyring.root.deriveChild(0));
+
+        await cp.simpleSend(
+          toAddress,
+          txMeta.txParams.value,
+          txMeta.txParams.feeParams,
+        );
+
+        this.txStateManager.setTxStatusSubmitted(txId);
+        this._trackTransactionMetricsEvent(
+          txMeta,
+          TransactionMetaMetricsEvent.approved,
+          actionId,
+        );
       }
     } catch (err) {
       // this is try-catch wrapped so that we can guarantee that the nonceLock is released

@@ -1,10 +1,19 @@
 import BN from 'bn.js';
 import { address, payments, networks } from 'bitcoinjs-lib';
+import bitcore from 'bitcore-lib';
 import { arrToBufArr } from 'ethereumjs-util';
 import { HDKey } from 'ethereum-cryptography/hdkey';
-import BtcService from '../../../btc-service';
+import BtcService from '../../../services/btc-service';
 
+import { ChainAccount, Fee, ProviderConfig } from './index.d';
 import ChainProvider from './interface';
+
+const DEFAULT_FEE_PER_BYTE = 22;
+
+const BTC_API_SERVICE = {
+  mainnet: 'https://api.blockcypher.com/v1/btc/main',
+  testnet: 'https://api.blockcypher.com/v1/btc/test3',
+};
 
 export default class ChainBitcoin implements ChainProvider {
   client: any;
@@ -16,17 +25,20 @@ export default class ChainBitcoin implements ChainProvider {
   defaultIconUrl =
     'https://www.citypng.com/public/uploads/preview/-51614559661pdiz2gx0zn.png';
 
-  constructor() {
-    this.client = BtcService;
+  constructor(_provider: ProviderConfig, isTestnet = false) {
+    this.client = new BtcService(
+      isTestnet ? BTC_API_SERVICE.testnet : BTC_API_SERVICE.mainnet,
+    );
   }
 
-  async getBalance(addrs: string, decimals: number) {
-    const { data } = await this.client.getBalance(addrs);
-    const result = data.balance;
-    return new BN(result, decimals);
+  async getBalance(_addrs: string) {
+    // const resp = await this.client.getAddressInfo(addrs);
+    // const result = resp.balance;
+    const result = 9e8;
+    return result;
   }
 
-  getAccount(hdKey: HDKey) {
+  getAccount(hdKey: HDKey): { address: string; privateKey: string } {
     if (!hdKey.publicKey) {
       throw new Error('No public key');
     }
@@ -34,7 +46,13 @@ export default class ChainBitcoin implements ChainProvider {
       pubkey: arrToBufArr(hdKey.publicKey),
       network: networks.testnet,
     });
-    return btcAccount;
+    if (!btcAccount.address || !hdKey.privateKey) {
+      throw new Error('Incorrect hdKey');
+    }
+    return {
+      address: btcAccount.address,
+      privateKey: Buffer.from(hdKey.privateKey).toString('hex'),
+    };
   }
 
   isAddress(string: string): boolean {
@@ -46,28 +64,84 @@ export default class ChainBitcoin implements ChainProvider {
     }
   }
 
-  async simpleSend(keyring: any, toAddress: string, amount: number) {
-    const tx = new bitcoin.TransactionBuilder(networks.testnet);
-    const unspent = await this.client.getUnspent(keyring.hdWallet.address);
-    const totalValue = unspent.reduce((acc, { value }) => acc + value, 0);
-    const fee = 10000; // 10,000 satoshis
-    const change = totalValue - amount - fee;
-    if (change < 0) {
-      throw new Error('Insufficient funds');
-    }
-    unspent.forEach(({ txid, vout }) => {
-      tx.addInput(txid, vout);
+  async getFee(
+    account: ChainAccount,
+    toAddress: string,
+    amount: BN,
+  ): Promise<Fee> {
+    const result = await this.client.getNetInfo();
+    const feeParams = {
+      highFeePerByte: result.high_fee_per_kb / 1024,
+      mediumFeePerByte: result.medium_fee_per_kb / 1024,
+      lowFeePerByte: result.low_fee_per_kb / 1024,
+    };
+    const transcation = await this._buildTransaction(
+      account,
+      toAddress,
+      amount,
+      feeParams.mediumFeePerByte,
+    );
+    return {
+      minValue: transcation.getFee(),
+      ...feeParams,
+    };
+  }
+
+  async _buildTransaction(
+    account: ChainAccount,
+    toAddress: string,
+    amount: BN,
+    feePerByte = DEFAULT_FEE_PER_BYTE,
+  ): Promise<bitcore.Transaction> {
+    const resp = await this.client.getAddressInfo(account.address);
+    const value = amount.toNumber();
+
+    const unspentTxs = resp.txrefs;
+
+    const utxos = unspentTxs.map((utxo: any) => {
+      return new bitcore.Transaction.UnspentOutput({
+        txId: utxo.tx_hash,
+        outputIndex: utxo.tx_output_n,
+        address: account.address,
+        script: bitcore.Script.buildPublicKeyHashOut(account.address),
+        satoshis: utxo.value,
+      });
     });
-    tx.addOutput(toAddress, amount);
-    if (change > 0) {
-      tx.addOutput(keyring.hdWallet.address, change);
+
+    const transaction = new bitcore.Transaction();
+
+    return transaction
+      .from(utxos)
+      .to(toAddress, value)
+      .change(account.address)
+      .feePerByte(feePerByte)
+      .fee(transaction.getFee());
+  }
+
+  async simpleSend(
+    account: ChainAccount,
+    toAddress: string,
+    amount: BN,
+    fee?: Fee,
+  ) {
+    const feePerByte = fee?.mediumFeePerByte
+      ? parseInt(fee.mediumFeePerByte as string, 16)
+      : undefined;
+    const transcation = await this._buildTransaction(
+      account,
+      toAddress,
+      amount,
+      feePerByte,
+    );
+
+    if (!account.privateKey) {
+      throw new Error('Private key not provided');
     }
-    const btcAccount = this.getAccount(keyring);
-    tx.sign(0, btcAccount.keyPair);
-    const txHex = tx.build().toHex();
-    const { data } = await this.client.broadcastTransaction(txHex);
-    return data.txid;
+
+    transcation.sign(account.privateKey);
+    const transactionString = transcation.serialize();
+
+    await this.client.broadcastTransaction(transactionString);
+    return transactionString;
   }
 }
-
-export const chainBitcoin = new ChainBitcoin();

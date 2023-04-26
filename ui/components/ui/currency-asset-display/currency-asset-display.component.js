@@ -10,11 +10,15 @@ export default function CurrencyAssetDisplay({
   style,
   className,
   provider,
+  native,
 }) {
   const cp = new ChainProvider(provider);
 
+  const decimals = native ? cp.nativeDecimals : cp.decimals;
+  const symbol = native ? cp.nativeSymbol : cp.symbol;
+
   const amountString = new Numeric(value, 16)
-    .shiftedBy(cp.decimals || 2)
+    .shiftedBy(decimals)
     .toBase(10)
     .toString();
 
@@ -25,7 +29,7 @@ export default function CurrencyAssetDisplay({
       title="test"
     >
       <span className="currency-display-component__text">{amountString}</span>
-      <span className="currency-display-component__suffix">{cp.symbol}</span>
+      <span className="currency-display-component__suffix">{symbol}</span>
     </div>
   );
 }
@@ -35,4 +39,9 @@ CurrencyAssetDisplay.propTypes = {
   style: PropTypes.object,
   value: PropTypes.string.isRequired,
   provider: PropTypes.object.isRequired,
+  native: PropTypes.bool,
+};
+
+CurrencyAssetDisplay.defaultProps = {
+  native: false,
 };

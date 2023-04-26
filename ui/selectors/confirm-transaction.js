@@ -260,6 +260,9 @@ export const contractExchangeRateSelector = createSelector(
 );
 
 export const transactionFeeSelector = function (state, txData) {
+  const { feeParams } = txData.txParams || {};
+  const { txParams: { value = '0x0' } = {} } = txData;
+
   const currentCurrency = currentCurrencySelector(state);
   const conversionRate = conversionRateSelector(state);
   const nativeCurrency =
@@ -320,8 +323,6 @@ export const transactionFeeSelector = function (state, txData) {
     }
   }
 
-  const { txParams: { value = '0x0' } = {} } = txData;
-
   const fiatTransactionAmount = getValueFromWeiHex({
     value,
     fromCurrency: nativeCurrency,
@@ -337,10 +338,17 @@ export const transactionFeeSelector = function (state, txData) {
     numberOfDecimals: 6,
   });
 
-  const hexMinimumTransactionFee =
+  let hexMinimumTransactionFee =
     getMinimumGasTotalInHexWei(gasEstimationObject);
-  const hexMaximumTransactionFee =
+  let hexMaximumTransactionFee =
     getMaximumGasTotalInHexWei(gasEstimationObject);
+  let hexTransactionTotal = sumHexes(value, hexMinimumTransactionFee);
+
+  if (feeParams) {
+    hexTransactionTotal = sumHexes(value, feeParams.minValue);
+    hexMaximumTransactionFee = feeParams.maxValue;
+    hexMinimumTransactionFee = feeParams.minValue;
+  }
 
   const fiatMinimumTransactionFee = getTransactionFee({
     value: hexMinimumTransactionFee,
@@ -371,7 +379,6 @@ export const transactionFeeSelector = function (state, txData) {
     fiatTransactionAmount,
   );
   const ethTransactionTotal = addEth(ethTransactionFee, ethTransactionAmount);
-  const hexTransactionTotal = sumHexes(value, hexMinimumTransactionFee);
 
   return {
     hexTransactionAmount: value,
@@ -386,5 +393,8 @@ export const transactionFeeSelector = function (state, txData) {
     ethTransactionTotal,
     hexTransactionTotal,
     gasEstimationObject,
+
+    bandwidth: feeParams?.bandwidth,
+    energy: feeParams?.energy,
   };
 };

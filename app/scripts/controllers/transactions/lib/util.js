@@ -26,6 +26,8 @@ const normalizers = {
   estimateSuggested: (estimate) => estimate,
   estimateUsed: (estimate) => estimate,
   assetDetails: (asset) => asset,
+  feeParams: (feeParams) => feeParams,
+  walletAddress: addHexPrefix,
 };
 
 export function normalizeAndValidateTxParams(txParams, lowerCase = true) {

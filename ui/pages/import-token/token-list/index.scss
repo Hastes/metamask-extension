@@ -51,18 +51,16 @@
     flex: 0 0 auto;
   }
 
-  &__token-data {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    min-width: 0;
-  }
-
   &__token-name {
     /*rtl:ignore*/
     direction: ltr;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    padding-bottom: 5px;
+  }
+
+  &__token-subtitle {
+    opacity: .5;
   }
 }

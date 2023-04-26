@@ -1668,15 +1668,7 @@ export function showConfTxPage({ id } = {}) {
   };
 }
 
-export function addToken({
-  provider,
-  account,
-  contract,
-  symbol,
-  decimals,
-  image,
-  dontShowLoadingIndicator,
-}) {
+export function addToken({ provider, dontShowLoadingIndicator }) {
   return async (dispatch) => {
     if (!provider) {
       throw new Error('MetaMask - Cannot add token without provider');
@@ -1685,14 +1677,7 @@ export function addToken({
       dispatch(showLoadingIndication());
     }
     try {
-      await submitRequestToBackground('addToken', [
-        provider,
-        account,
-        symbol,
-        decimals,
-        image,
-        contract,
-      ]);
+      await submitRequestToBackground('addToken', [provider]);
     } catch (error) {
       log.error(error);
       dispatch(displayWarning(error.message));
@@ -2253,78 +2238,6 @@ export function initMultichainAccounts() {
     dispatch(showLoadingIndication());
     try {
       submitRequestToBackground('initAccounts');
-      // dispatch(
-      //   addTokens([
-      //     {
-      //       provider: {
-      //         chainId: CHAIN_IDS.BTC,
-      //         type: NETWORK_TYPES.BITCOIN,
-      //         rpcUrl: null,
-      //       },
-      //       account: btcAccount.address,
-      //       symbol: 'BTC',
-      //       decimals: 9,
-      //       image:
-      //         'https://www.citypng.com/public/uploads/preview/-51614559661pdiz2gx0zn.png',
-      //     },
-      //     {
-      //       provider: {
-      //         chainId: CHAIN_IDS.BINANCE_CHAIN,
-      //         type: NETWORK_TYPES.BINANCE_CHAIN,
-      //         rpcUrl: null,
-      //       },
-      //       account: bscAccount.address,
-      //       symbol: 'BNB',
-      //       decimals: 18,
-      //       image:
-      //         'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
-      //     },
-      //     {
-      //       provider: {
-      //         chainId: CHAIN_IDS.BSC_TESTNET,
-      //         type: NETWORK_TYPES.RPC,
-      //         rpcUrl: 'https://data-seed-prebsc-2-s2.binance.org:8545',
-      //       },
-      //       account: getState().metamask.selectedAddress,
-      //       // contract: '0xd66c6b4f0be8ce5b39d52e0fd1344c389929b378',
-      //       symbol: 'tBNB',
-      //       decimals: 18,
-      //       image:
-      //         'https://seeklogo.com/images/B/binance-smart-chain-bsc-logo-9C34053D61-seeklogo.com.png',
-      //     },
-      //     {
-      //       provider: {
-      //         chainId: CHAIN_IDS.TRON,
-      //         type: NETWORK_TYPES.TRON,
-      //         rpcUrl: null,
-      //       },
-      //       account: tronAccount.address,
-      //       symbol: 'tTRX',
-      //       decimals: 6,
-      //       image: 'https://cryptologos.cc/logos/tron-trx-logo.png',
-      //     },
-      //   ]),
-      // );
-    } catch (error) {
-      dispatch(displayWarning(error.message));
-      throw error;
-    } finally {
-      dispatch(hideLoadingIndication());
-    }
-  };
-}
-
-export function btcSend(address, amount) {
-  return async (dispatch, getState) => {
-    dispatch(showLoadingIndication());
-    const state = getState();
-    try {
-      const sendParams = {
-        btcAccount: state.appState.btcAccount,
-        to: address,
-        amount,
-      };
-      await submitRequestToBackground('btcSend', [sendParams]);
     } catch (error) {
       dispatch(displayWarning(error.message));
       throw error;
@@ -2836,9 +2749,18 @@ export function setPendingTokens(pendingTokens) {
       : selectedTokens;
 
   Object.keys(tokens).forEach((tokenAddress) => {
-    tokens[tokenAddress].unlisted = !tokenAddressList.find((addr) =>
+    const token = tokens[tokenAddress];
+    token.unlisted = !tokenAddressList.find((addr) =>
       isEqualCaseInsensitive(addr, tokenAddress),
     );
+    token.provider = {
+      chainId: token.chainId,
+      type: token.type,
+      contract: tokenAddress,
+      decimals: token.decimals,
+      symbol: token.symbol,
+      iconUrl: token.iconUrl,
+    };
   });
 
   return {

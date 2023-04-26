@@ -161,6 +161,8 @@ const mapStateToProps = (state, ownProps) => {
     hexMaximumTransactionFee,
     hexTransactionTotal,
     gasEstimationObject,
+    bandwidth,
+    energy,
   } = transactionFeeSelector(state, transaction);
 
   const currentNetworkUnapprovedTxs = Object.keys(unapprovedTxs)
@@ -220,6 +222,8 @@ const mapStateToProps = (state, ownProps) => {
     hexMinimumTransactionFee,
     hexMaximumTransactionFee,
     hexTransactionTotal,
+    bandwidth,
+    energy,
     txData: fullTxData,
     tokenData,
     methodData,

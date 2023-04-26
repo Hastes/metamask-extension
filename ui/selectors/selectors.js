@@ -58,7 +58,9 @@ import {
   getLedgerTransportType,
   isAddressLedger,
   findKeyringForAddress,
+  getAllTokens,
 } from '../ducks/metamask/metamask';
+import { getSendAsset } from '../ducks/send';
 import {
   getLedgerWebHidConnectedStatus,
   getLedgerTransportStatus,
@@ -338,6 +340,42 @@ export const getMetaMaskAccountsOrdered = createSelector(
       .reduce((list, keyring) => list.concat(keyring.accounts), [])
       .filter((address) => Boolean(identities[address]))
       .map((address) => ({ ...identities[address], ...accounts[address] })),
+);
+
+export const getMetaMaskWalletAccounts = createSelector(
+  getAllTokens,
+  getMetaMaskIdentities,
+  getMetaMaskAccounts,
+  (allTokens, identities, accounts) => {
+    const result = Object.entries(allTokens)
+      .reduce(
+        (list, [walletAddress, walletDerivedAccounts]) => [
+          ...list,
+          ...walletDerivedAccounts.map((account) => ({
+            ...account,
+            walletAddress,
+          })),
+        ],
+        [],
+      )
+      .map((account) => ({
+        identity: identities[account.walletAddress],
+        wallet: accounts[account.walletAddress],
+        ...account,
+      }));
+    return result;
+  },
+);
+
+export const getMetaMaskWalletAccountsByCurrentProvider = createSelector(
+  getMetaMaskWalletAccounts,
+  getSendAsset,
+  (accounts, sendAsset) => {
+    const result = accounts.filter(({ provider }) =>
+      isEqual(provider, sendAsset.details.provider),
+    );
+    return result;
+  },
 );
 
 export const getMetaMaskAccountsConnected = createSelector(

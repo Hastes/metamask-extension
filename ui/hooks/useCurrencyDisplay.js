@@ -47,48 +47,59 @@ export function useCurrencyDisplay(
   inputValue,
   { displayValue, prefix, numberOfDecimals, denomination, currency, ...opts },
 ) {
-  const currentCurrency = useSelector(getCurrentCurrency);
-  const nativeCurrency = useSelector(getNativeCurrency);
-  const conversionRate = useSelector(getConversionRate);
-  const isUserPreferredCurrency = currency === currentCurrency;
+  // it depended from current chain and works only for eth chains
+  // const currentCurrency = useSelector(getCurrentCurrency);
+  // const nativeCurrency = useSelector(getNativeCurrency);
+  // const conversionRate = useSelector(getConversionRate);
+  // const isUserPreferredCurrency = currency === currentCurrency;
 
   const value = useMemo(() => {
     if (displayValue) {
       return displayValue;
     }
-    if (
-      currency === nativeCurrency ||
-      (!isUserPreferredCurrency && !nativeCurrency)
-    ) {
-      return new Numeric(inputValue, 16, EtherDenomination.WEI)
-        .toDenomination(denomination || EtherDenomination.ETH)
-        .round(numberOfDecimals || 2)
-        .toBase(10)
-        .toString();
-    } else if (isUserPreferredCurrency && conversionRate) {
-      return formatCurrency(
-        getValueFromWeiHex({
-          value: inputValue,
-          fromCurrency: nativeCurrency,
-          toCurrency: currency,
-          conversionRate,
-          numberOfDecimals: numberOfDecimals || 2,
-          toDenomination: denomination,
-        }),
-        currency,
-      );
-    }
-    return null;
-  }, [
-    inputValue,
-    nativeCurrency,
-    conversionRate,
-    displayValue,
-    numberOfDecimals,
-    denomination,
-    currency,
-    isUserPreferredCurrency,
-  ]);
+    return new Numeric(inputValue, 16)
+      .shiftedBy(numberOfDecimals)
+      .toBase(10)
+      .toString();
+  }, [inputValue, displayValue, numberOfDecimals]);
+
+  // const value = useMemo(() => {
+  //   if (displayValue) {
+  //     return displayValue;
+  //   }
+  //   if (
+  //     currency === nativeCurrency ||
+  //     (!isUserPreferredCurrency && !nativeCurrency)
+  //   ) {
+  //     return new Numeric(inputValue, 16, EtherDenomination.WEI)
+  //       .toDenomination(denomination || EtherDenomination.ETH)
+  //       .round(numberOfDecimals || 2)
+  //       .toBase(10)
+  //       .toString();
+  //   } else if (isUserPreferredCurrency && conversionRate) {
+  //     return formatCurrency(
+  //       getValueFromWeiHex({
+  //         value: inputValue,
+  //         fromCurrency: nativeCurrency,
+  //         toCurrency: currency,
+  //         conversionRate,
+  //         numberOfDecimals: numberOfDecimals || 2,
+  //         toDenomination: denomination,
+  //       }),
+  //       currency,
+  //     );
+  //   }
+  //   return null;
+  // }, [
+  //   inputValue,
+  //   nativeCurrency,
+  //   conversionRate,
+  //   displayValue,
+  //   numberOfDecimals,
+  //   denomination,
+  //   currency,
+  //   isUserPreferredCurrency,
+  // ]);
 
   let suffix;
 

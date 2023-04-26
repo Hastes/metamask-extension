@@ -187,6 +187,7 @@ export function generateTransactionParams(sendState) {
     // or the type of transaction.
     gas: draftTransaction.gas.gasLimit,
     assetDetails: draftTransaction.asset.details,
+    walletAddress: draftTransaction.walletAddress,
   };
   switch (draftTransaction.asset.type) {
     case AssetType.token:

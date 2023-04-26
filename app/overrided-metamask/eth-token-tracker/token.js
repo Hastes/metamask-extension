@@ -42,7 +42,7 @@ class Token {
     this.chainProvider = new ChainProvider(this.provider);
 
     if (!balance) {
-      balance = '0';
+      balance = new BN(0);
     } else if (_isInvalidBnInput(balance, 16)) {
       throw new Error(
         "Invalid 'balance' option provided; must be non-prefixed hex string if given as string",
@@ -55,10 +55,10 @@ class Token {
       );
     }
 
-    this.balance = new BN(balance, 16);
+    this.balance = balance;
     this.decimals = decimals ? new BN(decimals) : undefined;
     this.owner = owner;
-    this.contract = this.chainProvider.contract;
+    this.contract = this.provider.contract;
     this.eth = this.chainProvider.client;
     this.image = image;
   }
@@ -79,7 +79,7 @@ class Token {
       provider: this.provider,
       contract: this.contract,
       symbol: this.symbol,
-      balance: this.balance.toString(10),
+      balance: this.balance.toString(),
       decimals: this.decimals ? parseInt(this.decimals.toString(), 10) : 0,
       string: this.stringify(),
       image: this.image,
@@ -142,6 +142,7 @@ class Token {
         const balance = await this.chainBalanceSync(this.provider.chainId);
         if (balance) {
           this.balance = balance;
+          return this.balance;
         }
         break;
       }

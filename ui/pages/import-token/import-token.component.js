@@ -10,7 +10,6 @@ import { tokenInfoGetter } from '../../helpers/utils/token-util';
 import {
   ADD_NFT_ROUTE,
   CONFIRM_IMPORT_TOKEN_ROUTE,
-  SECURITY_ROUTE,
 } from '../../helpers/constants/routes';
 import TextField from '../../components/ui/text-field';
 import PageContainer from '../../components/ui/page-container';
@@ -96,13 +95,6 @@ class ImportToken extends Component {
     tokenList: PropTypes.object,
 
     /**
-     * Boolean flag indicating whether token detection is enabled or not.
-     * When disabled, shows an information alert in the search tab informing the
-     * user of the availability of this feature.
-     */
-    useTokenDetection: PropTypes.bool,
-
-    /**
      * Function called to fetch information about the token standard and
      * details, see `actions.js`.
      */
@@ -113,9 +105,6 @@ class ImportToken extends Component {
      */
     selectedAddress: PropTypes.string,
     isDynamicTokenListAvailable: PropTypes.bool.isRequired,
-    tokenDetectionInactiveOnNonMainnetSupportedNetwork:
-      PropTypes.bool.isRequired,
-    networkName: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -408,13 +397,7 @@ class ImportToken extends Component {
       nftAddressError,
     } = this.state;
 
-    const {
-      chainId,
-      rpcPrefs,
-      isDynamicTokenListAvailable,
-      tokenDetectionInactiveOnNonMainnetSupportedNetwork,
-      history,
-    } = this.props;
+    const { chainId, rpcPrefs, isDynamicTokenListAvailable } = this.props;
     const blockExplorerTokenLink = getTokenTrackerLink(
       customAddress,
       chainId,
@@ -428,64 +411,33 @@ class ImportToken extends Component {
 
     return (
       <div className="import-token__custom-token-form">
-        {tokenDetectionInactiveOnNonMainnetSupportedNetwork ? (
-          <ActionableMessage
-            type="warning"
-            message={t('customTokenWarningInTokenDetectionNetworkWithTDOFF', [
+        <ActionableMessage
+          type={isDynamicTokenListAvailable ? 'warning' : 'default'}
+          message={t(
+            isDynamicTokenListAvailable
+              ? 'customTokenWarningInTokenDetectionNetwork'
+              : 'customTokenWarningInNonTokenDetectionNetwork',
+            [
               <Button
                 type="link"
-                key="import-token-security-risk"
+                key="import-token-fake-token-warning"
                 className="import-token__link"
                 rel="noopener noreferrer"
                 target="_blank"
                 href={ZENDESK_URLS.TOKEN_SAFETY_PRACTICES}
               >
-                {t('tokenScamSecurityRisk')}
+                {t('learnScamRisk')}
               </Button>,
-              <Button
-                type="link"
-                key="import-token-token-detection-announcement"
-                className="import-token__link"
-                onClick={() =>
-                  history.push(`${SECURITY_ROUTE}#token-description`)
-                }
-              >
-                {t('inYourSettings')}
-              </Button>,
-            ])}
-            withRightButton
-            useIcon
-            iconFillColor="var(--color-warning-default)"
-          />
-        ) : (
-          <ActionableMessage
-            type={isDynamicTokenListAvailable ? 'warning' : 'default'}
-            message={t(
-              isDynamicTokenListAvailable
-                ? 'customTokenWarningInTokenDetectionNetwork'
-                : 'customTokenWarningInNonTokenDetectionNetwork',
-              [
-                <Button
-                  type="link"
-                  key="import-token-fake-token-warning"
-                  className="import-token__link"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  href={ZENDESK_URLS.TOKEN_SAFETY_PRACTICES}
-                >
-                  {t('learnScamRisk')}
-                </Button>,
-              ],
-            )}
-            withRightButton
-            useIcon
-            iconFillColor={
-              isDynamicTokenListAvailable
-                ? 'var(--color-warning-default)'
-                : 'var(--color-info-default)'
-            }
-          />
-        )}
+            ],
+          )}
+          withRightButton
+          useIcon
+          iconFillColor={
+            isDynamicTokenListAvailable
+              ? 'var(--color-warning-default)'
+              : 'var(--color-info-default)'
+          }
+        />
         <TextField
           id="custom-address"
           label={t('tokenContractAddress')}
@@ -574,32 +526,10 @@ class ImportToken extends Component {
   }
 
   renderSearchToken() {
-    const { t } = this.context;
-    const { tokenList, history, useTokenDetection, networkName } = this.props;
+    const { tokenList } = this.props;
     const { tokenSelectorError, selectedTokens, searchResults } = this.state;
     return (
       <div className="import-token__search-token">
-        {!useTokenDetection && (
-          <ActionableMessage
-            message={t('enhancedTokenDetectionAlertMessage', [
-              networkName,
-              <Button
-                type="link"
-                key="token-detection-announcement"
-                className="import-token__link"
-                onClick={() =>
-                  history.push(`${SECURITY_ROUTE}#token-description`)
-                }
-              >
-                {t('enableFromSettings')}
-              </Button>,
-            ])}
-            withRightButton
-            useIcon
-            iconFillColor="var(--color-primary-default)"
-            className="import-token__token-detection-announcement"
-          />
-        )}
         <TokenSearch
           onSearch={({ results = [] }) =>
             this.setState({ searchResults: results })
@@ -631,7 +561,7 @@ class ImportToken extends Component {
       );
     }
     tabs.push(
-      <Tab name={t('customToken')} key="custom-tab" tabKey="customToken">
+      <Tab name={t('customToken')} disabled key="custom-tab" tabKey="customToken">
         {this.renderCustomTokenForm()}
       </Tab>,
     );

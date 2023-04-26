@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import { PRIMARY } from '../../../helpers/constants/common';
+import { INSUFFICIENT_TOKENS_ERROR } from '../send.constants';
 import UserPreferencedCurrencyDisplay from '../../../components/app/user-preferenced-currency-display';
 import Typography from '../../../components/ui/typography';
 import Button from '../../../components/ui/button';
@@ -17,24 +18,23 @@ import {
 } from '../../../helpers/constants/design-system';
 import LoadingHeartBeat from '../../../components/ui/loading-heartbeat';
 import { getCurrentDraftTransaction } from '../../../ducks/send';
-import { addHexes } from '../../../../shared/modules/conversion.utils';
+import { transactionFeeSelector } from '../../../selectors';
+import CurrencyAssetDisplay from '../../../components/ui/currency-asset-display';
 
-import ChainTron from '../../../../app/scripts/controllers/network/chain-provider/chain-tron';
+// import { ChainProvider } from '../../../../app/scripts/controllers/network/chain-provider';
 
-export default function FeeDisplayTron() {
+export default function FeeDisplay() {
   const draftTransaction = useSelector(getCurrentDraftTransaction);
+  const { unapprovedTxs } = useSelector((state) => state.metamask);
+  const isInsufficientTokenError =
+    draftTransaction?.amount.error === INSUFFICIENT_TOKENS_ERROR;
+  const editingTransaction = unapprovedTxs[draftTransaction.id];
+  const { details } = draftTransaction.asset;
+  const { provider } = details;
 
-  let detailTotal, maxAmount;
-
-  const [fee, setFee] = useState([]);
-
-  const hexMaximumTransactionFee = '0x0';
-
-  const chainTron = new ChainTron();
-
-  chainTron.getFee().then((resp) => {
-    // setFee(resp);
-  });
+  const { hexTransactionTotal } = useSelector((state) =>
+    transactionFeeSelector(state, editingTransaction),
+  );
 
   // if (draftTransaction?.asset.type === 'NATIVE') {
   //   detailTotal = (
@@ -64,5 +64,13 @@ export default function FeeDisplayTron() {
   //   );
   // }
 
-  return <Box>{fee}</Box>;
+  return (
+    <Box>
+      <CurrencyAssetDisplay
+        key="total-detail-value"
+        value={hexTransactionTotal}
+        provider={provider}
+      />
+    </Box>
+  );
 }

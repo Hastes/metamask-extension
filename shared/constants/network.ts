@@ -153,19 +153,46 @@ export const CHAIN_IDS = {
   SEPOLIA: '0xaa36a7',
   LINEA_TESTNET: '0xe704',
   AURORA: '0x4e454152',
-  TRON: '0x2494104990',
 
   // non-web3
   BTC: 'bitcoin',
+  BTC_TESTNET: 'bitcoin_testnet',
+
   BINANCE_CHAIN: 'binance-chain',
+
+  TRON: '0x2494104990',
+  TRON_TESTNET: '0x2494104991',
 } as const;
+
+export const TEST_CHAINS = [
+  CHAIN_IDS.POLYGON_TESTNET,
+  CHAIN_IDS.LINEA_TESTNET,
+  CHAIN_IDS.FANTOM_TESTNET,
+  CHAIN_IDS.OPTIMISM_TESTNET,
+  CHAIN_IDS.AVALANCHE_TESTNET,
+  CHAIN_IDS.BTC_TESTNET,
+  CHAIN_IDS.BSC_TESTNET,
+  CHAIN_IDS.TRON_TESTNET,
+  CHAIN_IDS.GOERLI,
+  CHAIN_IDS.SEPOLIA,
+];
+
+export const INFURA_PROVIDER_TYPES = [
+  NETWORK_TYPES.MAINNET,
+  NETWORK_TYPES.GOERLI,
+  NETWORK_TYPES.SEPOLIA,
+];
 
 export const CHAIN_ALIASES = {
   [CHAIN_IDS.MAINNET]: 'ERC-20',
-  [CHAIN_IDS.BSC_TESTNET]: 'BEP-20',
+  [CHAIN_IDS.GOERLI]: 'ERC-20 test',
+  [CHAIN_IDS.BSC]: 'BEP-20',
+  [CHAIN_IDS.BSC_TESTNET]: 'BEP-20 test',
   [CHAIN_IDS.BINANCE_CHAIN]: 'BEP-2',
   [CHAIN_IDS.TRON]: 'TRC-20',
+  [CHAIN_IDS.TRON_TESTNET]: 'TRC-20 test',
   [CHAIN_IDS.BTC]: 'BITCOIN',
+  [CHAIN_IDS.BTC_TESTNET]: 'BITCOIN test',
 } as const;
 
 /**
@@ -212,6 +239,9 @@ export const GOERLI_RPC_URL = getRpcUrl({ network: NETWORK_TYPES.GOERLI });
 export const SEPOLIA_RPC_URL = getRpcUrl({ network: NETWORK_TYPES.SEPOLIA });
 export const LINEA_TESTNET_RPC_URL = 'https://rpc.goerli.linea.build';
 export const LOCALHOST_RPC_URL = 'http://localhost:8545';
+export const BSC_TESTNET_RPC_URL =
+  'https://data-seed-prebsc-2-s2.binance.org:8545';
+export const BSC_RPC_URL = 'https://bscrpc.com';
 
 /**
  * An object containing the token symbols for various tokens that are either
@@ -250,19 +280,6 @@ export const OPTIMISM_TOKEN_IMAGE_URL = './images/optimism.svg';
 export const PALM_TOKEN_IMAGE_URL = './images/palm.svg';
 export const AURORA_TOKEN_IMAGE_URL = './images/aurora.png';
 export const CELO_TOKEN_IMAGE_URL = './images/celo.svg';
-
-export const INFURA_PROVIDER_TYPES = [
-  NETWORK_TYPES.MAINNET,
-  NETWORK_TYPES.GOERLI,
-  NETWORK_TYPES.SEPOLIA,
-];
-
-export const TEST_CHAINS = [
-  CHAIN_IDS.GOERLI,
-  CHAIN_IDS.SEPOLIA,
-  CHAIN_IDS.LINEA_TESTNET,
-  CHAIN_IDS.LOCALHOST,
-];
 
 const typedCapitalize = <K extends string>(k: K): Capitalize<K> =>
   capitalize(k) as Capitalize<typeof k>;
@@ -357,6 +374,8 @@ export const CHAIN_ID_TO_RPC_URL_MAP = {
   [CHAIN_IDS.LINEA_TESTNET]: LINEA_TESTNET_RPC_URL,
   [CHAIN_IDS.MAINNET]: MAINNET_RPC_URL,
   [CHAIN_IDS.LOCALHOST]: LOCALHOST_RPC_URL,
+  [CHAIN_IDS.BSC]: BSC_RPC_URL,
+  [CHAIN_IDS.BSC_TESTNET]: BSC_TESTNET_RPC_URL,
 } as const;
 
 export const CHAIN_ID_TO_NETWORK_IMAGE_URL_MAP = {

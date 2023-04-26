@@ -28,30 +28,30 @@ export default function RecipientGroup({
           {label}
         </div>
       )}
-      {items.map(({ address, name }) => (
+      {items.map(({ account, identity: { name } }) => (
         <div
-          key={address}
-          onClick={() => onSelect(address, name)}
+          key={account}
+          onClick={() => onSelect(account, name)}
           className={classnames({
             'send__select-recipient-wrapper__group-item': !addressesEqual(
-              address,
+              account,
               selectedAddress,
             ),
             'send__select-recipient-wrapper__group-item--selected':
-              addressesEqual(address, selectedAddress),
+              addressesEqual(account, selectedAddress),
           })}
         >
-          <Identicon address={address} diameter={28} />
+          <Identicon address={account} diameter={28} />
           <div
             className="send__select-recipient-wrapper__group-item__content"
             data-testid="recipient"
           >
             <div className="send__select-recipient-wrapper__group-item__title">
-              {name || ellipsify(address)}
+              {name || ellipsify(account)}
             </div>
             {name && (
               <div className="send__select-recipient-wrapper__group-item__subtitle">
-                {ellipsify(address)}
+                {ellipsify(account)}
               </div>
             )}
           </div>
@@ -65,7 +65,7 @@ RecipientGroup.propTypes = {
   label: PropTypes.string,
   items: PropTypes.arrayOf(
     PropTypes.shape({
-      address: PropTypes.string.isRequired,
+      walletAddress: PropTypes.string.isRequired,
       name: PropTypes.string,
     }),
   ),

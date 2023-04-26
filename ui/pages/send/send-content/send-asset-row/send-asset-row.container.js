@@ -22,7 +22,6 @@ function mapStateToProps(state) {
     nativeCurrency: getNativeCurrency(state),
     nativeCurrencyImage: getNativeCurrencyImage(state),
   };
-  // debugger;
   return props;
 }
 

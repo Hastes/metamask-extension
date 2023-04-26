@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { checkExistingAddresses } from '../../../helpers/utils/util';
+import { CHAIN_ALIASES } from '../../../../shared/constants/network';
 import TokenListPlaceholder from './token-list-placeholder';
 
 export default class TokenList extends Component {
@@ -35,7 +36,7 @@ export default class TokenList extends Component {
           {Array(6)
             .fill(undefined)
             .map((_, i) => {
-              const { symbol, name, address } = results[i] || {};
+              const { symbol, name, address, chainId } = results[i] || {};
               const tokenAlreadyAdded = checkExistingAddresses(address, tokens);
               const onClick = () =>
                 !tokenAlreadyAdded && onToggleToken(results[i]);
@@ -60,7 +61,10 @@ export default class TokenList extends Component {
                       }}
                     />
                     <div className="token-list__token-data">
-                      <span className="token-list__token-name">{`${name} (${symbol})`}</span>
+                      <div className="token-list__token-name">{`${name} (${symbol})`}</div>
+                      <div className="token-list__token-subtitle">
+                        {CHAIN_ALIASES[chainId]}
+                      </div>
                     </div>
                   </div>
                 )

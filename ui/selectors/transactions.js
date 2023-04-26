@@ -69,7 +69,7 @@ export const selectedAddressTxListSelector = createSelector(
   smartTransactionsListSelector,
   (selectedAddress, transactions = [], smTransactions = []) => {
     return transactions
-      .filter(({ txParams }) => txParams.from === selectedAddress)
+      .filter(({ txParams }) => txParams.walletAddress === selectedAddress)
       .concat(smTransactions);
   },
 );

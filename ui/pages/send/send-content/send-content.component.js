@@ -13,7 +13,7 @@ import { AssetType } from '../../../../shared/constants/transaction';
 import { CONTRACT_ADDRESS_LINK } from '../../../helpers/constants/common';
 import { NETWORK_TYPES } from '../../../../shared/constants/network';
 import GasDisplay from '../gas-display';
-import FeeDisplayTron from '../fee-display-tron';
+import FeeDisplay from '../fee-display';
 import SendAmountRow from './send-amount-row';
 import SendHexDataRow from './send-hex-data-row';
 import SendAssetRow from './send-asset-row';
@@ -71,7 +71,10 @@ export default class SendContent extends Component {
     const showKnownRecipientWarning =
       recipient.warning === 'knownAddressRecipient';
 
-    const isTrc20 = asset.details.provider.type === NETWORK_TYPES.TRON;
+    const isEthTypeNetwork = [
+      NETWORK_TYPES.MAINNET,
+      NETWORK_TYPES.RPC,
+    ].includes(asset.details.provider.type);
 
     return (
       <PageContainerContent>
@@ -87,9 +90,11 @@ export default class SendContent extends Component {
             : null}
           <SendAssetRow />
           <SendAmountRow />
-          {networkOrAccountNotSupports1559 && !isTrc20 ? <SendGasRow /> : null}
+          {networkOrAccountNotSupports1559 && isEthTypeNetwork ? (
+            <SendGasRow />
+          ) : null}
           {showHexData ? <SendHexDataRow /> : null}
-          {isTrc20 ? <FeeDisplayTron /> : <GasDisplay gasError={gasError} />}
+          {isEthTypeNetwork ? <GasDisplay gasError={gasError} /> : null}
         </div>
       </PageContainerContent>
     );

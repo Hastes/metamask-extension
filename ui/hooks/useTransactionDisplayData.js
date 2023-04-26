@@ -35,6 +35,7 @@ import {
 import { captureSingleException } from '../store/actions';
 import { isEqualCaseInsensitive } from '../../shared/modules/string-utils';
 import { getTokenValueParam } from '../../shared/lib/metamask-controller-utils';
+import { ChainProvider } from '../../app/scripts/controllers/network/chain-provider';
 import { useI18nContext } from './useI18nContext';
 import { useTokenFiatAmount } from './useTokenFiatAmount';
 import { useUserPreferencedCurrency } from './useUserPreferencedCurrency';
@@ -96,7 +97,6 @@ export function useTransactionDisplayData(transactionGroup) {
   // To determine which primary currency to display for swaps transactions we need to be aware
   // of which asset, if any, we are viewing at present
   const dispatch = useDispatch();
-  const currentAsset = useCurrentAsset();
   const knownTokens = useSelector(getTokens);
   const knownNfts = useSelector(getNfts);
   const detectedTokens = useSelector(getDetectedTokensInCurrentNetwork) || [];
@@ -104,6 +104,9 @@ export function useTransactionDisplayData(transactionGroup) {
   const t = useI18nContext();
 
   const { initialTransaction, primaryTransaction } = transactionGroup;
+  const currentAsset = new ChainProvider(
+    primaryTransaction.txParams.assetDetails.provider,
+  );
   // initialTransaction contains the data we need to derive the primary purpose of this transaction group
   const { type } = initialTransaction;
   const { from: senderAddress, to } = initialTransaction.txParams || {};
@@ -322,14 +325,12 @@ export function useTransactionDisplayData(transactionGroup) {
     );
   }
 
-  const primaryCurrencyPreferences = useUserPreferencedCurrency(PRIMARY);
   const secondaryCurrencyPreferences = useUserPreferencedCurrency(SECONDARY);
-
   const [primaryCurrency] = useCurrencyDisplay(primaryValue, {
     prefix,
-    displayValue: primaryDisplayValue,
     suffix: primarySuffix,
-    ...primaryCurrencyPreferences,
+    currency: currentAsset.symbol,
+    numberOfDecimals: currentAsset.decimals,
   });
 
   const [secondaryCurrency] = useCurrencyDisplay(primaryValue, {

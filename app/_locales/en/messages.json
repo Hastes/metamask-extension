@@ -178,7 +178,7 @@
     "message": "Add account"
   },
   "addAcquiredTokens": {
-    "message": "Add the tokens you've acquired using MetaMask"
+    "message": "Add the tokens"
   },
   "addAlias": {
     "message": "Add alias"
@@ -3292,7 +3292,7 @@
     "message": "Search in Settings"
   },
   "searchTokens": {
-    "message": "Search tokens"
+    "message": "Token name, ticker or smart contract"
   },
   "secretRecoveryPhrase": {
     "message": "Secret Recovery Phrase"

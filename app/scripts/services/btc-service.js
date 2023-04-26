@@ -1,22 +1,9 @@
-const BTC_TESTNET_BLOCKCHAIN = 'https://testnet.blockcypher.com/v1/btc/test3/';
-
 class BtcServiceApi {
   constructor(url) {
     this.apiBaseUrl = url;
   }
 
-  static async getUnspent(address) {
-    const url = `https://api.blockcypher.com/v1/btc/test3/addrs/${address}/unspent`;
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.map(({ tx_hash, tx_output_n, value }) => ({
-      txid: tx_hash,
-      vout: tx_output_n,
-      value: value,
-    }));
-  }
-
-  async get(url) {
+  async get(url = '') {
     const resp = await fetch(`${this.apiBaseUrl}${url}`);
     const result = await resp.json();
     return result;
@@ -41,19 +28,29 @@ class BtcServiceApi {
    * @returns {Promise} fetch response
    */
   async getAddressInfo(address) {
-    const result = await this.get(`addrs/${address}`);
+    const result = await this.get(`/addrs/${address}?unspentOnly=true`);
     return result;
   }
 
-  /**
-   * get balance
-   *
-   * @param {string} address - account address
-   * @returns {Promise} fetch response
-   */
-  async getBalance(address) {
-    const result = await this.get(`addrs/${address}/balance`);
-    return result;
+  getNetInfo() {
+    return this.get();
+  }
+
+  async initTransaction(from, to, satoshis) {
+    const payloads = {
+      inputs: [
+        {
+          addresses: [from],
+        },
+      ],
+      outputs: [
+        {
+          addresses: [to],
+          value: satoshis,
+        },
+      ],
+    };
+    return this.post(`/txs/new`, payloads);
   }
 
   /**
@@ -63,11 +60,9 @@ class BtcServiceApi {
    * @returns {Promise} fetch response
    */
   async broadcastTransaction(transaction) {
-    const result = await this.post('push/transaction', { data: transaction });
+    const result = await this.post('/txs/push', { tx: transaction });
     return result;
   }
 }
 
-const BtcService = new BtcServiceApi(BTC_TESTNET_BLOCKCHAIN);
-
-export default BtcService;
+export default BtcServiceApi;

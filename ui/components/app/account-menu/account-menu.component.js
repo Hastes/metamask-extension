@@ -10,6 +10,7 @@ import SiteIcon from '../../ui/site-icon';
 import UserPreferencedCurrencyDisplay from '../user-preferenced-currency-display';
 import {
   PRIMARY,
+  SECONDARY,
   ///: BEGIN:ONLY_INCLUDE_IN(beta,flask)
   SUPPORT_REQUEST_LINK,
   ///: END:ONLY_INCLUDE_IN
@@ -229,7 +230,7 @@ export default class AccountMenu extends Component {
               className="account-menu__balance"
               data-testid="account-menu__balance"
               value={identity.balance}
-              type={PRIMARY}
+              type={SECONDARY}
             />
           </div>
           <KeyRingLabel keyring={keyring} />

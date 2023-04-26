@@ -92,7 +92,7 @@ export default function GasDisplay({ gasError }) {
   const currentNetworkName = NETWORK_TO_NAME_MAP[provider.chainId];
   const nativeCurrency = details.symbol;
   const isMainnet = details.provider.chainId === '0x1';
-  const isTestnet = false;
+  // const isTestnet = false;
 
   const {
     hexMinimumTransactionFee,

@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import {
   getAddressBook,
   getAddressBookEntry,
-  getMetaMaskAccountsOrdered,
+  getMetaMaskWalletAccountsByCurrentProvider,
   currentNetworkTxListSelector,
 } from '../../../../selectors';
 
@@ -52,7 +52,9 @@ function mapStateToProps(state) {
     return b.timestamp - a.timestamp;
   });
 
-  const ownedAccounts = getMetaMaskAccountsOrdered(state);
+  const ownedAccounts = getMetaMaskWalletAccountsByCurrentProvider(state);
+
+  // const draftTransaction = getCurrentDraftTransaction(state);
 
   return {
     addressBook,

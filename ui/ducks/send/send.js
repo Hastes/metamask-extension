@@ -503,13 +503,8 @@ export const computeEstimatedGasLimit = createAsyncThunk(
     const unapprovedTxs = getUnapprovedTxs(state);
     const isMultiLayerFeeNetwork = getIsMultiLayerFeeNetwork(state);
     const transaction = unapprovedTxs[draftTransaction.id];
-    const { provider } = draftTransaction.asset.details;
+    const { provider, isEthTypeNetwork } = draftTransaction.asset.details;
     const chainId = provider.chainId || getCurrentChainId(state);
-
-    const isEthTypeNetwork = [
-      NETWORK_TYPES.MAINNET,
-      NETWORK_TYPES.RPC,
-    ].includes(provider.type);
 
     const isNonStandardEthChain = ![
       CHAIN_IDS.MAINNET,
@@ -616,15 +611,12 @@ export const initializeSendState = createAsyncThunk(
         'draftTransaction not found, possibly not on send flow',
       );
     }
-    const { provider } = draftTransaction.asset.details;
+    const { provider, isEthTypeNetwork, isNonStandardEthChain } =
+      draftTransaction.asset.details;
 
     const { chainId } = provider;
     const { account } = draftTransaction.asset.details;
     const eip1559support = [CHAIN_IDS.MAINNET].includes(chainId);
-    const isNonStandardEthChain = ![
-      CHAIN_IDS.MAINNET,
-      CHAIN_IDS.GOERLI,
-    ].includes(chainId);
 
     // Default gasPrice to 1 gwei if all estimation fails, this is only used
     // for gasLimit estimation and won't be set directly in state. Instead, we
@@ -634,68 +626,70 @@ export const initializeSendState = createAsyncThunk(
       sendState.stage === SEND_STAGES.EDIT
         ? draftTransaction.gas.gasPrice
         : '0x1';
+    // Set a basic gasLimit in the event that other estimation fails
+    let { gasLimit } = draftTransaction.gas;
+
     let gasEstimatePollToken = null;
-    if ([NETWORK_TYPES.MAINNET, NETWORK_TYPES.RPC].includes(provider.type)) {
+    let gasFeeEstimates = null;
+    let gasEstimateType = null;
+
+    if (isEthTypeNetwork) {
       // Instruct the background process that polling for gas prices should begin
       gasEstimatePollToken = await getGasFeeEstimatesAndStartPolling(provider);
       addPollingTokenToAppState(gasEstimatePollToken);
-    }
 
-    const {
-      metamask: { gasFeeEstimates, gasEstimateType },
-    } = thunkApi.getState();
+      gasFeeEstimates = state.metamask.gasFeeEstimates;
+      gasEstimateType = state.metamask.gasEstimateType;
 
-    if (sendState.stage !== SEND_STAGES.EDIT) {
-      // Because we are only interested in getting a gasLimit estimation we only
-      // need to worry about gasPrice. So we use maxFeePerGas as gasPrice if we
-      // have a fee market estimation.
-      if (gasEstimateType === GasEstimateTypes.legacy) {
-        gasPrice = getGasPriceInHexWei(gasFeeEstimates.medium);
-      } else if (gasEstimateType === GasEstimateTypes.ethGasPrice) {
-        gasPrice = getRoundedGasPrice(gasFeeEstimates.gasPrice);
-      } else if (gasEstimateType === GasEstimateTypes.feeMarket) {
-        gasPrice = getGasPriceInHexWei(
-          gasFeeEstimates.medium.suggestedMaxFeePerGas,
-        );
-      } else {
-        gasPrice = gasFeeEstimates.gasPrice
-          ? getRoundedGasPrice(gasFeeEstimates.gasPrice)
-          : '0x0';
+      if (sendState.stage !== SEND_STAGES.EDIT) {
+        // Because we are only interested in getting a gasLimit estimation we only
+        // need to worry about gasPrice. So we use maxFeePerGas as gasPrice if we
+        // have a fee market estimation.
+        if (gasEstimateType === GasEstimateTypes.legacy) {
+          gasPrice = getGasPriceInHexWei(gasFeeEstimates.medium);
+        } else if (gasEstimateType === GasEstimateTypes.ethGasPrice) {
+          gasPrice = getRoundedGasPrice(gasFeeEstimates.gasPrice);
+        } else if (gasEstimateType === GasEstimateTypes.feeMarket) {
+          gasPrice = getGasPriceInHexWei(
+            gasFeeEstimates.medium.suggestedMaxFeePerGas,
+          );
+        } else {
+          gasPrice = gasFeeEstimates.gasPrice
+            ? getRoundedGasPrice(gasFeeEstimates.gasPrice)
+            : '0x0';
+        }
       }
+      if (
+        gasEstimateType !== GasEstimateTypes.none &&
+        sendState.stage !== SEND_STAGES.EDIT &&
+        draftTransaction.recipient.address
+      ) {
+        gasLimit =
+          draftTransaction.asset.type === AssetType.token ||
+          draftTransaction.asset.type === AssetType.NFT
+            ? GAS_LIMITS.BASE_TOKEN_ESTIMATE
+            : GAS_LIMITS.SIMPLE;
+        // Run our estimateGasLimit logic to get a more accurate estimation of
+        // required gas. If this value isn't nullish, set it as the new gasLimit
+        const estimatedGasLimit = await estimateGasLimitForSend({
+          gasPrice,
+          blockGasLimit: metamask.currentBlockGasLimit,
+          selectedAddress:
+            draftTransaction.fromAccount?.address ??
+            sendState.selectedAccount.address,
+          sendToken: draftTransaction.asset.details,
+          to: draftTransaction.recipient.address.toLowerCase(),
+          value: draftTransaction.amount.value,
+          data: draftTransaction.userInputHexData,
+          isNonStandardEthChain,
+          chainId,
+        });
+        gasLimit = estimatedGasLimit || gasLimit;
+      }
+      // We have to keep the gas slice in sync with the send slice state
+      // so that it'll be initialized correctly if the gas modal is opened.
+      await thunkApi.dispatch(setCustomGasLimit(gasLimit));
     }
-
-    // Set a basic gasLimit in the event that other estimation fails
-    let { gasLimit } = draftTransaction.gas;
-    if (
-      gasEstimateType !== GasEstimateTypes.none &&
-      sendState.stage !== SEND_STAGES.EDIT &&
-      draftTransaction.recipient.address
-    ) {
-      gasLimit =
-        draftTransaction.asset.type === AssetType.token ||
-        draftTransaction.asset.type === AssetType.NFT
-          ? GAS_LIMITS.BASE_TOKEN_ESTIMATE
-          : GAS_LIMITS.SIMPLE;
-      // Run our estimateGasLimit logic to get a more accurate estimation of
-      // required gas. If this value isn't nullish, set it as the new gasLimit
-      const estimatedGasLimit = await estimateGasLimitForSend({
-        gasPrice,
-        blockGasLimit: metamask.currentBlockGasLimit,
-        selectedAddress:
-          draftTransaction.fromAccount?.address ??
-          sendState.selectedAccount.address,
-        sendToken: draftTransaction.asset.details,
-        to: draftTransaction.recipient.address.toLowerCase(),
-        value: draftTransaction.amount.value,
-        data: draftTransaction.userInputHexData,
-        isNonStandardEthChain,
-        chainId,
-      });
-      gasLimit = estimatedGasLimit || gasLimit;
-    }
-    // We have to keep the gas slice in sync with the send slice state
-    // so that it'll be initialized correctly if the gas modal is opened.
-    // await thunkApi.dispatch(setCustomGasLimit(gasLimit));
 
     // There may be a case where the send has been canceled by the user while
     // the gas estimate is being computed. So we check again to make sure that
@@ -723,6 +717,7 @@ export const initializeSendState = createAsyncThunk(
       eip1559support,
       useTokenDetection: getUseTokenDetection(state),
       tokenAddressList: Object.keys(getTokenList(state)),
+      walletAddress: state.metamask.selectedAddress,
     };
   },
 );
@@ -1575,6 +1570,7 @@ const slice = createSlice({
           draftTransaction.gas.gasLimit = action.payload.gasLimit;
           draftTransaction.gas.gasTotal = action.payload.gasTotal;
           draftTransaction.eip1559support = action.payload.eip1559support;
+          draftTransaction.walletAddress = action.payload.walletAddress;
           if (action.payload.chainHasChanged) {
             // If the state was reinitialized as a result of the user changing
             // the network from the network dropdown, then the selected asset is
@@ -2027,7 +2023,16 @@ export function updateSendAsset(
 ) {
   return async (dispatch, getState) => {
     const state = getState();
-    const details = { ...providedDetails };
+    const details = {
+      ...providedDetails,
+      isEthTypeNetwork: [NETWORK_TYPES.MAINNET, NETWORK_TYPES.RPC].includes(
+        providedDetails.provider.type,
+      ),
+      isNonStandardEthChain: ![
+        NETWORK_TYPES.MAINNET,
+        NETWORK_TYPES.GOERLI,
+      ].includes(providedDetails.provider.type),
+    };
     const draftTransaction =
       state[name].draftTransactions[state[name].currentTransactionUUID];
     const sendingAddress =
@@ -2035,6 +2040,7 @@ export function updateSendAsset(
       state[name].selectedAccount.address ??
       getSelectedAddress(state);
     const account = getTargetAccount(state, sendingAddress);
+
     if (type === AssetType.native) {
       const unapprovedTxs = getUnapprovedTxs(state);
       const unapprovedTx = unapprovedTxs?.[draftTransaction.id];

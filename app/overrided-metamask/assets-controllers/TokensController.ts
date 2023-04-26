@@ -217,18 +217,14 @@ export class TokensController extends BaseController<
         this.config.selectedAddress,
       );
 
-      const addressIdx = keyring.getAccounts().indexOf(this.config.selectedAddress);
-      const { root } = keyring;
-      const hdKey = root.deriveChild(addressIdx);
-
-      const account = cp.getAccount(hdKey);
+      const account = cp.getAccount(keyring.root.deriveChild(0));
 
       let tokenMetadata;
       let isERC721;
-      if (provider.contract) {
+      if (provider.contract && 'fetchTokenMetadata' in cp.chain) {
         [isERC721, tokenMetadata] = await Promise.all([
-          cp.detectIsERC721(),
-          cp.fetchTokenMetadata(),
+          cp.chain.detectIsERC721(),
+          cp.chain.fetchTokenMetadata(),
         ]);
       }
       const newEntry: Token = {
@@ -625,12 +621,8 @@ export class TokensController extends BaseController<
     newDetectedTokens?: Token[];
     detectionAddress?: string;
   }) {
-    const {
-      newTokens,
-      newIgnoredTokens,
-      newDetectedTokens,
-      detectionAddress,
-    } = params;
+    const { newTokens, newIgnoredTokens, newDetectedTokens, detectionAddress } =
+      params;
     const { allTokens, allIgnoredTokens, allDetectedTokens } = this.state;
     const { selectedAddress } = this.config;
 
@@ -639,9 +631,7 @@ export class TokensController extends BaseController<
     let newAllTokens = allTokens;
     if (
       newTokens?.length ||
-      (newTokens &&
-        allTokens &&
-        allTokens[userAddressToAddTokens])
+      (newTokens && allTokens && allTokens[userAddressToAddTokens])
     ) {
       newAllTokens = {
         ...allTokens,
@@ -649,7 +639,7 @@ export class TokensController extends BaseController<
       };
     }
 
-    let newAllIgnoredTokens = allIgnoredTokens;
+    const newAllIgnoredTokens = allIgnoredTokens;
     if (
       newIgnoredTokens?.length ||
       (newIgnoredTokens &&

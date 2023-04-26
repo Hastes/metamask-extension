@@ -53,7 +53,7 @@ export default function NetworkDisplay({
             color={
               networkType === NETWORK_TYPES.RPC
                 ? IconColor.iconMuted
-                : networkType
+                : IconColor.iconDefault
             }
             size={indicatorSize}
             type={ColorIndicator.TYPES.FILLED}
@@ -94,13 +94,7 @@ NetworkDisplay.propTypes = {
   /**
    * The target network
    */
-  targetNetwork: PropTypes.shape({
-    type: PropTypes.oneOf([
-      ...Object.keys(BUILT_IN_NETWORKS),
-      NETWORK_TYPES.RPC,
-    ]),
-    nickname: PropTypes.string,
-  }),
+  targetNetwork: PropTypes.object,
   /**
    * Whether the NetworkDisplay is disabled
    */

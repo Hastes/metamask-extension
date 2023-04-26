@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SendRowWrapper from '../send-row-wrapper';
@@ -145,7 +146,7 @@ export default class SendAssetRow extends Component {
       const token = tokens.find(
         ({ account, provider }) =>
           isEqualCaseInsensitive(account, details.account) &&
-          provider.chainId === details.provider.chainId,
+          isEqual(provider, details.provider),
       );
       return this.renderNativeCurrency({ ...details, ...token });
       // return this.renderToken(details);
