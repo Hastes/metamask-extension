@@ -137,6 +137,7 @@ export default class TokenInput extends PureComponent {
           className="currency-input__conversion-component"
           currency={currency}
           value={hexWeiValue}
+          provider={token.provider}
           numberOfDecimals={numberOfDecimals}
         />
       );

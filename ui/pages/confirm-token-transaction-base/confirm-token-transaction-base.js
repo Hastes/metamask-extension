@@ -40,10 +40,10 @@ export default function ConfirmTokenTransactionBase({
   ethTransactionTotal,
   fiatTransactionTotal,
   hexMaximumTransactionFee,
+  nativeCurrency,
 }) {
   const t = useContext(I18nContext);
   const contractExchangeRate = useSelector(contractExchangeRateSelector);
-  const nativeCurrency = useSelector(getNativeCurrency);
   const currentCurrency = useSelector(getCurrentCurrency);
   const conversionRate = useSelector(getConversionRate);
 
@@ -58,7 +58,7 @@ export default function ConfirmTokenTransactionBase({
   ) {
     title = assetName;
     subtitle = `#${tokenId}`;
-  } else if (assetStandard === TokenStandard.ERC20) {
+  } else {
     title = `${tokenAmount} ${tokenSymbol}`;
   }
 
@@ -147,4 +147,5 @@ ConfirmTokenTransactionBase.propTypes = {
   ethTransactionTotal: PropTypes.string,
   fiatTransactionTotal: PropTypes.string,
   hexMaximumTransactionFee: PropTypes.string,
+  nativeCurrency: PropTypes.string,
 };

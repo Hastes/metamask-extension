@@ -1272,14 +1272,14 @@ const slice = createSlice({
       switch (true) {
         // set error to INSUFFICIENT_FUNDS_FOR_GAS_ERROR if the account balance is lower
         // than the total price of the transaction inclusive of gas fees.
-        // case draftTransaction.asset.type === AssetType.native &&
-        //   !isBalanceSufficient({
-        //     amount: draftTransaction.amount.value,
-        //     balance: draftTransaction.asset.balance,
-        //     gasTotal: draftTransaction.gas.gasTotal ?? '0x0',
-        //   }):
-        //   draftTransaction.amount.error = INSUFFICIENT_FUNDS_FOR_GAS_ERROR;
-        //   break;
+        case draftTransaction.asset.type === AssetType.native &&
+          !isBalanceSufficient({
+            amount: draftTransaction.amount.value,
+            balance: draftTransaction.asset.balance,
+            gasTotal: draftTransaction.gas.gasTotal ?? '0x0',
+          }):
+          draftTransaction.amount.error = INSUFFICIENT_FUNDS_FOR_GAS_ERROR;
+          break;
         // set error to INSUFFICIENT_TOKENS_ERROR if the token balance is lower
         // than the amount of token the user is attempting to send.
         case draftTransaction.asset.type === AssetType.token &&
@@ -2054,7 +2054,7 @@ export function updateSendAsset(
       );
 
       const balance = addHexPrefix(
-        calcTokenAmount(details.balance, details.decimals).toString(16),
+        calcTokenAmount(details.balance).toString(16),
       );
       await dispatch(
         actions.updateAsset({

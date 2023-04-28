@@ -219,6 +219,7 @@ export async function getAssetDetails(
   transactionData,
   existingNfts,
 ) {
+  // DEPRECATED in dextrade. Moved in chains classes
   const tokenData = parseStandardTokenTransactionData(transactionData);
   if (!tokenData) {
     throw new Error('Unable to detect valid token data');

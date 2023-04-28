@@ -26,13 +26,14 @@ import { EtherDenomination } from '../../shared/constants/common';
  * @typedef {object} UserPreferredCurrency
  * @property {string} currency - the currency type to use (eg: 'ETH', 'usd')
  * @property {number} numberOfDecimals - Number of significant decimals to display
+ * @property {string} nativeCurrency - the native currency to use (eg: 'ETH', 'BSC')
  */
 
 /**
  * useUserPreferencedCurrency
  *
- * returns an object that contains what currency to use for displaying values based
- * on the user's preference settings, as well as the significant number of decimals
+ * returns an object that contains what currency to use for displaying values,
+ * as well as the significant number of decimals
  * to display based on the currency
  *
  * @param {"PRIMARY" | "SECONDARY"} type - what display type is being rendered
@@ -40,27 +41,12 @@ import { EtherDenomination } from '../../shared/constants/common';
  * @returns {UserPreferredCurrency}
  */
 export function useUserPreferencedCurrency(type, opts = {}) {
-  const nativeCurrency = useSelector(getNativeCurrency);
-  const { useNativeCurrencyAsPrimaryCurrency } = useSelector(
-    getPreferences,
-    shallowEqual,
-  );
-  const showFiat = useSelector(getShouldShowFiat) || opts.showFiatOverride;
   const currentCurrency = useSelector(getCurrentCurrency);
-
   let currency, numberOfDecimals;
-  if (
-    !showFiat ||
-    (type === PRIMARY && useNativeCurrencyAsPrimaryCurrency) ||
-    (type === SECONDARY && !useNativeCurrencyAsPrimaryCurrency)
-  ) {
-    // Display ETH
-    currency = nativeCurrency || EtherDenomination.ETH;
-    numberOfDecimals = opts.numberOfDecimals || opts.ethNumberOfDecimals || 8;
-  } else if (
-    (type === SECONDARY && useNativeCurrencyAsPrimaryCurrency) ||
-    (type === PRIMARY && !useNativeCurrencyAsPrimaryCurrency)
-  ) {
+  if (type === PRIMARY) {
+    currency = null;
+    numberOfDecimals = opts.numberOfDecimals || opts.ethNumberOfDecimals;
+  } else if (type === SECONDARY) {
     // Display Fiat
     currency = currentCurrency;
     numberOfDecimals = opts.numberOfDecimals || opts.fiatNumberOfDecimals || 2;

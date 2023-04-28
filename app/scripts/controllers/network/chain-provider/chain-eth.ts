@@ -1,5 +1,5 @@
 import BN from 'bn.js';
-import EthQuery from 'ethjs-query';
+import Eth from 'ethjs';
 import EthContract from 'ethjs-contract';
 import { publicToAddress, arrToBufArr, addHexPrefix } from 'ethereumjs-util';
 import abi from 'human-standard-token-abi';
@@ -7,27 +7,36 @@ import { HDKey } from 'ethereum-cryptography/hdkey';
 
 import {
   toChecksumHexAddress,
+  ERC20,
   ERC721_INTERFACE_ID,
 } from '@metamask/controller-utils';
 import {
   isBurnAddress,
   isValidHexAddress,
 } from '../../../../../shared/modules/hexstring-utils';
-import { getProvider } from '../provider-api-tests/helpers';
+
 import {
   fetchTokenMetadata,
   TOKEN_METADATA_NO_SUPPORT_ERROR,
 } from '../../../../overrided-metamask/assets-controllers/token-service';
 import contractsMap from '../../../../overrided-metamask/contract-metadata';
-import { CHAIN_ID_TO_RPC_URL_MAP } from '../../../../../shared/constants/network';
 import { formatIconUrlWithProxy } from '../../../../overrided-metamask/assets-controllers/assetsUtil';
 import { TokenListToken } from '../../../../overrided-metamask/assets-controllers/TokenListController';
+
+import { CHAIN_ID_TO_RPC_URL_MAP } from '../../../../../shared/constants/network';
+import { parseStandardTokenTransactionData } from '../../../../../shared/modules/transaction.utils';
+import { getTokenIdParam } from '../../../../../shared/lib/token-util';
+import { getTokenValueParam } from '../../../../../shared/lib/metamask-controller-utils';
+import { calcTokenAmount } from '../../../../../shared/lib/transactions-controller-utils';
+
+import { generateERC20TransferData } from '../../../../../ui/pages/send/send.utils';
+import { getTokenAddressParam } from '../../../../../ui/helpers/utils/token-util';
 import ChainProvider from './interface';
 
 import { ProviderConfig, ChainAccount } from './index.d';
 
 export default class ChainEth implements ChainProvider {
-  client: typeof EthQuery;
+  client: typeof Eth;
 
   provider: ProviderConfig;
 
@@ -42,19 +51,17 @@ export default class ChainEth implements ChainProvider {
 
   constructor(provider: ProviderConfig) {
     const rpcUrl = (CHAIN_ID_TO_RPC_URL_MAP as any)[provider.chainId];
-
-    const buildedProvider = getProvider({
-      providerType: 'custom',
-      customRpcUrl: rpcUrl,
-      customChainId: provider.chainId,
-    });
-    this.client = new EthQuery(buildedProvider);
+    this.client = new Eth(new Eth.HttpProvider(rpcUrl));
     this.provider = provider;
 
     if (provider.contract) {
       const contract = new EthContract(this.client);
       this.contract = contract(abi).at(provider.contract);
     }
+  }
+
+  get decimals() {
+    return this.provider.decimals || this.defaultDecimals;
   }
 
   async getBalance(address: string): Promise<string> {
@@ -94,6 +101,42 @@ export default class ChainEth implements ChainProvider {
       mixedCaseUseChecksum: true,
     });
     return isAddress;
+  }
+
+  generateTokenTransferData(transferParams: any) {
+    return generateERC20TransferData(transferParams);
+  }
+
+  parseTokenTransferData(transactionData: string) {
+    const tokenData = parseStandardTokenTransactionData(transactionData);
+    if (!tokenData) {
+      throw new Error('Unable to detect valid token data');
+    }
+
+    // Sometimes the tokenId value is parsed as "_value" param. Not seeing this often any more, but still occasionally:
+    // i.e. call approve() on BAYC contract - https://etherscan.io/token/0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d#writeContract, and tokenId shows up as _value,
+    // not sure why since it doesn't match the ERC721 ABI spec we use to parse these transactions - https://github.com/MetaMask/metamask-eth-abis/blob/d0474308a288f9252597b7c93a3a8deaad19e1b2/src/abis/abiERC721.ts#L62.
+    const tokenId = getTokenIdParam(tokenData)?.toString();
+
+    const toAddress = getTokenAddressParam(tokenData);
+    const tokenAmount =
+      tokenData &&
+      calcTokenAmount(getTokenValueParam(tokenData), this.decimals).toString(
+        10,
+      );
+    return {
+      toAddress,
+      tokenAmount,
+      tokenId,
+    };
+  }
+
+  getStandard(): string | null {
+    // TODO: improve it
+    if (this.provider.contract) {
+      return ERC20;
+    }
+    return null;
   }
 
   /**

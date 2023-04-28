@@ -15,6 +15,7 @@ export default function UserPreferencedCurrencyDisplay({
   type,
   showFiat,
   showCurrencySuffix,
+  provider,
   ...restProps
 }) {
   const { currency, numberOfDecimals } = useUserPreferencedCurrency(type, {
@@ -22,6 +23,7 @@ export default function UserPreferencedCurrencyDisplay({
     fiatNumberOfDecimals,
     numberOfDecimals: propsNumberOfDecimals,
     showFiatOverride: showFiat,
+    nativeCurrency: provider?.symbol,
   });
   const prefixComponent = useMemo(() => {
     return (
@@ -38,15 +40,18 @@ export default function UserPreferencedCurrencyDisplay({
     );
   }, [currency, showEthLogo, ethLogoHeight]);
 
-  return (
+  return provider ? (
     <CurrencyDisplay
       {...restProps}
+      provider={provider}
       currency={currency}
       data-testid={dataTestId}
       numberOfDecimals={numberOfDecimals}
       prefixComponent={prefixComponent}
       suffix={showCurrencySuffix && !showEthLogo && currency}
     />
+  ) : (
+    <span className="text-left half-opacity">Balance not available</span>
   );
 }
 
@@ -72,4 +77,10 @@ UserPreferencedCurrencyDisplay.propTypes = {
   ]),
   showFiat: PropTypes.bool,
   showCurrencySuffix: PropTypes.bool,
+  provider: PropTypes.object,
+  native: PropTypes.bool,
+};
+
+UserPreferencedCurrencyDisplay.defaultProps = {
+  provider: null,
 };

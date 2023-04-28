@@ -11,6 +11,7 @@ import { getValueFromWeiHex } from '../../shared/modules/conversion.utils';
 import { TEST_NETWORK_TICKER_MAP } from '../../shared/constants/network';
 import { Numeric } from '../../shared/modules/Numeric';
 import { EtherDenomination } from '../../shared/constants/common';
+import { ChainProvider } from '../../app/scripts/controllers/network/chain-provider';
 
 /**
  * Defines the shape of the options parameter for useCurrencyDisplay
@@ -21,6 +22,7 @@ import { EtherDenomination } from '../../shared/constants/common';
  * @property {number} [numberOfDecimals] - Number of significant decimals to display
  * @property {string} [denomination] - Denomination (wei, gwei) to convert to for display
  * @property {string} [currency] - Currency type to convert to. Will override nativeCurrency
+ * @property {boolean} [native] - Is native token value
  */
 
 /**
@@ -45,23 +47,34 @@ import { EtherDenomination } from '../../shared/constants/common';
  */
 export function useCurrencyDisplay(
   inputValue,
-  { displayValue, prefix, numberOfDecimals, denomination, currency, ...opts },
+  { displayValue, prefix, numberOfDecimals, currency, provider, ...opts },
 ) {
   // it depended from current chain and works only for eth chains
-  // const currentCurrency = useSelector(getCurrentCurrency);
-  // const nativeCurrency = useSelector(getNativeCurrency);
-  // const conversionRate = useSelector(getConversionRate);
-  // const isUserPreferredCurrency = currency === currentCurrency;
-
+  const conversionRate = useSelector(getConversionRate);
+  const cp = new ChainProvider(provider);
+  const providerCurrency = opts.native ? cp.nativeSymbol : cp.symbol;
+  const outputCurrency = currency || providerCurrency;
+  const shiftBy = opts.native ? cp.nativeDecimals : cp.decimals;
+  const roundBy = numberOfDecimals || 2;
   const value = useMemo(() => {
     if (displayValue) {
       return displayValue;
     }
-    return new Numeric(inputValue, 16)
-      .shiftedBy(numberOfDecimals)
-      .toBase(10)
-      .toString();
-  }, [inputValue, displayValue, numberOfDecimals]);
+    let numeric = new Numeric(inputValue, 16).toBase(10).shiftedBy(shiftBy);
+    if (providerCurrency.toLowerCase() !== outputCurrency.toLowerCase()) {
+      numeric = numeric.applyConversionRate(conversionRate).round(roundBy);
+      return formatCurrency(numeric.toString(), outputCurrency);
+    }
+    return numeric.toString();
+  }, [
+    inputValue,
+    displayValue,
+    conversionRate,
+    outputCurrency,
+    shiftBy,
+    roundBy,
+    providerCurrency,
+  ]);
 
   // const value = useMemo(() => {
   //   if (displayValue) {
@@ -78,14 +91,14 @@ export function useCurrencyDisplay(
   //       .toString();
   //   } else if (isUserPreferredCurrency && conversionRate) {
   //     return formatCurrency(
-  //       getValueFromWeiHex({
-  //         value: inputValue,
-  //         fromCurrency: nativeCurrency,
-  //         toCurrency: currency,
-  //         conversionRate,
-  //         numberOfDecimals: numberOfDecimals || 2,
-  //         toDenomination: denomination,
-  //       }),
+  // getValueFromWeiHex({
+  //   value: inputValue,
+  //   fromCurrency: nativeCurrency,
+  //   toCurrency: currency,
+  //   conversionRate,
+  //   numberOfDecimals: numberOfDecimals || 2,
+  //   toDenomination: denomination,
+  // }),
   //       currency,
   //     );
   //   }
@@ -112,7 +125,7 @@ export function useCurrencyDisplay(
       ? currency
       : currency?.toUpperCase();
 
-    suffix = opts.suffix || currencyTickerSymbol;
+    suffix = opts.suffix || outputCurrency || currencyTickerSymbol;
   }
 
   return [

@@ -11,9 +11,8 @@ import {
 } from '../../helpers/constants/error-keys';
 import UserPreferencedCurrencyDisplay from '../../components/app/user-preferenced-currency-display';
 
-import { SECONDARY } from '../../helpers/constants/common';
+import { PRIMARY, SECONDARY } from '../../helpers/constants/common';
 import TextField from '../../components/ui/text-field';
-import CurrencyAssetDisplay from '../../components/ui/currency-asset-display';
 import SimulationErrorMessage from '../../components/ui/simulation-error-message';
 import { EVENT } from '../../../shared/constants/metametrics';
 import {
@@ -366,9 +365,11 @@ export default class ConfirmTransactionBase extends Component {
       ) {
         // Native Send
         return (
-          <CurrencyAssetDisplay
+          <UserPreferencedCurrencyDisplay
+            type={PRIMARY}
             key="total-max-amount"
             value={addHexes(txData.txParams.value, hexMaximumTransactionFee)}
+            hideLabel={!useNativeCurrencyAsPrimaryCurrency}
             provider={assetDetails.provider}
           />
         );
@@ -388,9 +389,11 @@ export default class ConfirmTransactionBase extends Component {
         return (
           <div className="confirm-page-container-content__total-value">
             <LoadingHeartBeat estimateUsed={this.props.txData?.userFeeLevel} />
-            <CurrencyAssetDisplay
+            <UserPreferencedCurrencyDisplay
               key="total-detail-value"
               value={hexTransactionTotal}
+              type={PRIMARY}
+              hideLabel={!useNativeCurrencyAsPrimaryCurrency}
               provider={assetDetails.provider}
             />
           </div>
@@ -413,6 +416,7 @@ export default class ConfirmTransactionBase extends Component {
               type={SECONDARY}
               key="total-detail-text"
               value={hexTransactionTotal}
+              provider={assetDetails.provider}
               hideLabel={Boolean(useNativeCurrencyAsPrimaryCurrency)}
             />
           </div>
@@ -510,6 +514,7 @@ export default class ConfirmTransactionBase extends Component {
                 <UserPreferencedCurrencyDisplay
                   type={SECONDARY}
                   value={hexMinimumTransactionFee}
+                  provider={assetDetails.provider}
                   hideLabel={Boolean(useNativeCurrencyAsPrimaryCurrency)}
                 />
               </div>
@@ -518,9 +523,11 @@ export default class ConfirmTransactionBase extends Component {
           detailTotal={
             <div className="confirm-page-container-content__currency-container">
               {renderHeartBeatIfNotInTest()}
-              <CurrencyAssetDisplay
+              <UserPreferencedCurrencyDisplay
                 value={hexMinimumTransactionFee}
                 provider={assetDetails.provider}
+                type={PRIMARY}
+                hideLabel={!useNativeCurrencyAsPrimaryCurrency}
               />
             </div>
           }
@@ -534,10 +541,12 @@ export default class ConfirmTransactionBase extends Component {
                 className="confirm-page-container-content__currency-container"
               >
                 {renderHeartBeatIfNotInTest()}
-                <CurrencyAssetDisplay
+                <UserPreferencedCurrencyDisplay
                   key="editGasSubTextFeeAmount"
                   value={hexMaximumTransactionFee}
                   provider={assetDetails.provider}
+                  type={PRIMARY}
+                  hideLabel={!useNativeCurrencyAsPrimaryCurrency}
                 />
               </div>
             </>
@@ -665,7 +674,8 @@ export default class ConfirmTransactionBase extends Component {
                   detailTitle="Fee"
                   detailTotal={
                     <div>
-                      <CurrencyAssetDisplay
+                      <UserPreferencedCurrencyDisplay
+                        type={PRIMARY}
                         value={hexMinimumTransactionFee}
                         provider={assetDetails.provider}
                         native
@@ -681,7 +691,8 @@ export default class ConfirmTransactionBase extends Component {
                   subTitle="Estimated"
                   detailTotal={
                     <div>
-                      <CurrencyAssetDisplay
+                      <UserPreferencedCurrencyDisplay
+                        type={PRIMARY}
                         value={hexMaximumTransactionFee}
                         provider={assetDetails.provider}
                         native
@@ -928,35 +939,32 @@ export default class ConfirmTransactionBase extends Component {
     if (title) {
       return null;
     }
-    // const isContractInteraction =
-    //   txData.type === TransactionType.contractInteraction;
+    const isContractInteraction =
+      txData.type === TransactionType.contractInteraction;
 
-    if (txData.isEthTypeNetwork) {
-      return (
-        <CurrencyAssetDisplay
-          value={hexTransactionAmount}
-          provider={assetDetails.provider}
-        />
-      );
-    }
     return (
-      <CurrencyAssetDisplay
+      <UserPreferencedCurrencyDisplay
         value={hexTransactionAmount}
         provider={assetDetails.provider}
+        type={PRIMARY}
+        hideLabel={!isContractInteraction}
+        showCurrencySuffix={isContractInteraction}
       />
     );
   }
 
   renderSubtitleComponent() {
-    const { subtitleComponent, hexTransactionAmount } = this.props;
+    const { subtitleComponent, hexTransactionAmount, assetDetails } =
+      this.props;
 
     return (
       subtitleComponent || (
         <UserPreferencedCurrencyDisplay
           value={hexTransactionAmount}
           type={SECONDARY}
-          showEthLogo
+          provider={assetDetails.provider}
           hideLabel
+          assetDetails={assetDetails.provider}
         />
       )
     );

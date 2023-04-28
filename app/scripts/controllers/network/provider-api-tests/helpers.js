@@ -5,6 +5,7 @@ import { providerFromEngine } from '@metamask/eth-json-rpc-middleware';
 import EthQuery from 'eth-query';
 import createInfuraClient from '../createInfuraClient';
 import createJsonRpcClient from '../createJsonRpcClient';
+import { CHAIN_ID_TO_RPC_URL_MAP } from '../../../../../shared/constants/network';
 
 /**
  * @typedef {import('nock').Scope} NockScope
@@ -419,15 +420,18 @@ export function getProvider({
 
   const engine = new JsonRpcEngine();
   engine.push(networkMiddleware);
-  const provider = providerFromEngine(engine);
-  return provider;
+  return providerFromEngine(engine);
 }
 
-export function getEthQueryFromProviderConfig(providerConfig) {
+export function getEthQueryFromProviderConfig({ chainId }) {
+  const rpcUrl = CHAIN_ID_TO_RPC_URL_MAP[chainId];
+  if (!rpcUrl) {
+    throw new Error('Rpc url not found for this provider');
+  }
   const buildedProvider = getProvider({
     providerType: 'custom',
-    customRpcUrl: providerConfig.rpcUrl,
-    customChainId: providerConfig.chainId,
+    customRpcUrl: rpcUrl,
+    customChainId: chainId,
   });
   return new EthQuery(buildedProvider);
 }

@@ -19,6 +19,7 @@ import { getGasPriceInHexWei } from '../../selectors';
 import { estimateGas } from '../../store/actions';
 import { Numeric } from '../../../shared/modules/Numeric';
 import { getEthQueryFromProviderConfig } from '../../../app/scripts/controllers/network/provider-api-tests/helpers';
+import { ChainProvider } from '../../../app/scripts/controllers/network/chain-provider';
 
 export async function estimateGasLimitForSend({
   selectedAddress,
@@ -181,12 +182,13 @@ export async function estimateGasLimitForSend({
 export function generateTransactionParams(sendState) {
   const draftTransaction =
     sendState.draftTransactions[sendState.currentTransactionUUID];
+  const { details } = draftTransaction.asset;
   const txParams = {
-    from: draftTransaction.asset.details.account,
+    from: details.account,
     // gasLimit always needs to be set regardless of the asset being sent
     // or the type of transaction.
     gas: draftTransaction.gas.gasLimit,
-    assetDetails: draftTransaction.asset.details,
+    assetDetails: details,
     walletAddress: draftTransaction.walletAddress,
   };
   switch (draftTransaction.asset.type) {
@@ -197,10 +199,12 @@ export function generateTransactionParams(sendState) {
       // amount.
       txParams.to = draftTransaction.asset.details.contract;
       txParams.value = '0x0';
-      txParams.data = generateERC20TransferData({
+      txParams.data = new ChainProvider(
+        details.provider,
+      ).generateTokenTransferData({
         toAddress: draftTransaction.recipient.address,
         amount: draftTransaction.amount.value,
-        sendToken: draftTransaction.asset.details,
+        sendToken: details,
       });
       break;
     case AssetType.NFT:
@@ -215,7 +219,7 @@ export function generateTransactionParams(sendState) {
         fromAddress:
           draftTransaction.fromAccount?.address ??
           sendState.selectedAccount.address,
-        tokenId: draftTransaction.asset.details.tokenId,
+        tokenId: details.tokenId,
       });
       break;
     case AssetType.native:

@@ -11,6 +11,7 @@ import { PollingBlockTracker } from 'eth-block-tracker';
 import { SECOND } from '../../../../shared/constants/time';
 
 export default function createJsonRpcClient({ rpcUrl, chainId }) {
+  console.log(rpcUrl);
   const blockTrackerOpts = process.env.IN_TEST
     ? { pollingInterval: SECOND }
     : {};

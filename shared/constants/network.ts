@@ -99,7 +99,7 @@ export const NETWORK_TYPES = {
 
   BITCOIN: 'bitcoin',
   TRON: 'tron',
-  BINANCE_CHAIN: 'binance_chain',
+  // BINANCE_CHAIN: 'binance_chain', beacon chain
 } as const;
 
 /**
@@ -354,6 +354,7 @@ export const NETWORK_TO_NAME_MAP = {
   [CHAIN_IDS.MAINNET]: MAINNET_DISPLAY_NAME,
   [CHAIN_IDS.LOCALHOST]: LOCALHOST_DISPLAY_NAME,
   [CHAIN_IDS.TRON]: 'Tron Mainnet',
+  [CHAIN_IDS.TRON_TESTNET]: 'Tron Testnet',
   [CHAIN_IDS.BTC]: 'Bitcoin Mainnet',
   [CHAIN_IDS.BINANCE_CHAIN]: 'Beacon Chain Mainnet',
   [CHAIN_IDS.BSC]: 'Binance Smart Chain Mainnet',

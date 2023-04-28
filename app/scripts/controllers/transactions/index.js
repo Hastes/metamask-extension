@@ -9,7 +9,6 @@ import NonceTracker from 'nonce-tracker';
 import log from 'loglevel';
 import BigNumber from 'bignumber.js';
 import { merge, pickBy } from 'lodash';
-import { Transaction } from 'bitcoinjs-lib';
 import cleanErrorStack from '../../lib/cleanErrorStack';
 import {
   hexToBn,
@@ -59,7 +58,6 @@ import {
   TRANSACTION_ENVELOPE_TYPE_NAMES,
 } from '../../../../shared/lib/transactions-controller-utils';
 import { Numeric } from '../../../../shared/modules/Numeric';
-import { getProvider } from '../network/provider-api-tests/helpers';
 import { ChainProvider } from '../network/chain-provider';
 import TransactionStateManager from './tx-state-manager';
 import TxGasUtil from './tx-gas-utils';
@@ -237,16 +235,6 @@ export default class TransactionController extends EventEmitter {
       return 0;
     }
     return integerChainId;
-  }
-
-  getCustomQuery(provider) {
-    const buildedProvider = getProvider({
-      providerType: 'custom',
-      customRpcUrl: provider.rpcUrl,
-      customChainId: provider.chainId,
-    });
-
-    return new EthQuery(buildedProvider);
   }
 
   async getEIP1559Compatibility(fromAddress) {
@@ -869,10 +857,11 @@ export default class TransactionController extends EventEmitter {
     //   }
     // }
     txMeta.type = transactionType;
+    const cp = new ChainProvider(assetDetails.provider);
     if (isEthTypeNetwork) {
       const { type } = await determineTransactionType(
         normalizedTxParams,
-        this.query,
+        cp.chain.client,
       );
       if (type) {
         txMeta.type = type;
@@ -893,7 +882,6 @@ export default class TransactionController extends EventEmitter {
     if (isEthTypeNetwork) {
       txMeta = await this.addTransactionGasDefaults(txMeta);
     } else {
-      const cp = new ChainProvider(assetDetails.provider);
       const currentAddress = this.getSelectedAddress();
       const keyring = await this.keyringController.getKeyringForAccount(
         currentAddress,
@@ -1400,6 +1388,8 @@ export default class TransactionController extends EventEmitter {
         )) ||
       !assetDetails;
 
+    const chainProvider = new ChainProvider(assetDetails.provider);
+
     try {
       // approve
       this.txStateManager.setTxStatusApproved(txId);
@@ -1411,8 +1401,8 @@ export default class TransactionController extends EventEmitter {
       customNonceValue = Number(customNonceValue);
 
       if (isEthTypeNetwork) {
-        if (assetDetails) {
-          const ethQuery = this.getCustomQuery(assetDetails.provider);
+        if (chainProvider) {
+          const ethQuery = chainProvider.chain.client;
           const nonce = await ethQuery.getTransactionCount(fromAddress);
           txMeta.txParams.nonce = addHexPrefix(nonce.toString(16));
         } else {
@@ -1441,7 +1431,7 @@ export default class TransactionController extends EventEmitter {
         );
         // sign transaction
         const rawTx = await this.signTransaction(txId);
-        await this.publishTransaction(txId, rawTx, actionId);
+        await this.publishEthTransaction(txId, rawTx, actionId, chainProvider);
         this._trackTransactionMetricsEvent(
           txMeta,
           TransactionMetaMetricsEvent.approved,
@@ -1452,20 +1442,24 @@ export default class TransactionController extends EventEmitter {
           nonceLock.releaseLock();
         }
       } else {
-        const cp = new ChainProvider(assetDetails.provider);
         const currentAddress = this.getSelectedAddress();
         const keyring = await this.keyringController.getKeyringForAccount(
           currentAddress,
         );
 
-        cp.setHdKey(keyring.root.deriveChild(0));
-
-        await cp.simpleSend(
-          toAddress,
-          txMeta.txParams.value,
-          txMeta.txParams.feeParams,
-        );
-
+        chainProvider.setHdKey(keyring.root.deriveChild(0));
+        if (chainProvider.provider.contract) {
+          await chainProvider.transfer({
+            transactionData: txMeta.txParams.data,
+            fee: txMeta.txParams.feeParams,
+          });
+        } else {
+          await chainProvider.simpleSend(
+            toAddress,
+            txMeta.txParams.value,
+            txMeta.txParams.feeParams,
+          );
+        }
         this.txStateManager.setTxStatusSubmitted(txId);
         this._trackTransactionMetricsEvent(
           txMeta,
@@ -1613,13 +1607,13 @@ export default class TransactionController extends EventEmitter {
    * @param {string} rawTx - the hex string of the serialized signed transaction
    * @returns {Promise<void>}
    * @param {number} actionId - actionId passed from UI
+   * @param {ChainProvider?} chainProvider - actionId passed from UI
    */
-  async publishTransaction(txId, rawTx, actionId) {
+  async publishEthTransaction(txId, rawTx, actionId, chainProvider) {
     const txMeta = this.txStateManager.getTransaction(txId);
     let { query } = this;
-    const { provider } = txMeta.txParams.assetDetails || {};
-    if (provider) {
-      query = this.getCustomQuery(provider);
+    if (chainProvider) {
+      query = chainProvider.chain.client;
     }
     txMeta.rawTx = rawTx;
     if (txMeta.type === TransactionType.swap) {

@@ -60,6 +60,7 @@ export default function MultilayerFeeMessage({
       value={feeTotal}
       showFiat
       hideLabel
+      provider={transaction.txParams.assetDetails.provider}
     />
   );
 
@@ -69,6 +70,7 @@ export default function MultilayerFeeMessage({
       value={totalInWeiHex}
       showFiat
       hideLabel
+      provider={transaction.txParams.assetDetails.provider}
     />
   );
 

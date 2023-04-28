@@ -12,6 +12,7 @@ export default function TokenBalance({ className, token }) {
       className={className}
       displayValue={string}
       suffix={symbol}
+      provider={token.provider}
     />
   );
 }
@@ -20,8 +21,7 @@ TokenBalance.propTypes = {
   className: PropTypes.string,
   token: PropTypes.shape({
     address: PropTypes.string,
-    decimals: PropTypes.number,
-    symbol: PropTypes.string,
+    provider: PropTypes.object,
   }).isRequired,
 };
 

@@ -145,6 +145,7 @@ const EditGasItem = ({ priorityLevel }) => {
               key="editGasSubTextFeeAmount"
               type={PRIMARY}
               value={hexMaximumTransactionFee}
+              provider={transaction.txParams.assetDetails.provider}
             />
           </div>
         ) : (

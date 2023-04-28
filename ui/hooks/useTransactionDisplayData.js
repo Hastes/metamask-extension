@@ -329,12 +329,13 @@ export function useTransactionDisplayData(transactionGroup) {
   const [primaryCurrency] = useCurrencyDisplay(primaryValue, {
     prefix,
     suffix: primarySuffix,
-    currency: currentAsset.symbol,
+    provider: currentAsset.provider,
     numberOfDecimals: currentAsset.decimals,
   });
 
   const [secondaryCurrency] = useCurrencyDisplay(primaryValue, {
     prefix,
+    provider: currentAsset.provider,
     displayValue: secondaryDisplayValue,
     hideLabel: isTokenCategory || Boolean(swapTokenValue),
     ...secondaryCurrencyPreferences,

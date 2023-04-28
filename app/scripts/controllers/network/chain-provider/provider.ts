@@ -9,7 +9,7 @@ import {
 } from '../../../../../shared/constants/network';
 
 import { ProviderConfig, ChainAccount, Fee } from './index.d';
-import ChainBinance from './chain-binance';
+
 import ChainTron from './chain-tron';
 import ChainBitcoin from './chain-bitcoin';
 import ChainEth from './chain-eth';
@@ -22,7 +22,7 @@ const _hexToBn = (v: string) => {
 export class ChainProvider {
   readonly provider: ProviderConfig;
 
-  readonly chain: ChainBinance | ChainBitcoin | ChainTron | ChainEth;
+  readonly chain: ChainBitcoin | ChainTron | ChainEth;
 
   readonly nativeDecimals: number;
 
@@ -46,8 +46,9 @@ export class ChainProvider {
       [NETWORK_TYPES.LOCALHOST]: ChainEth,
       [NETWORK_TYPES.LINEA_TESTNET]: null,
       [NETWORK_TYPES.TRON]: ChainTron,
-      [NETWORK_TYPES.BINANCE_CHAIN]: ChainBinance,
       [NETWORK_TYPES.BITCOIN]: ChainBitcoin,
+      // beacon chain is deprecated
+      // [NETWORK_TYPES.BINANCE_CHAIN]: ChainBinance,
     };
 
     const isTestnet = TEST_CHAINS.some(
@@ -104,6 +105,28 @@ export class ChainProvider {
     return this.chain.isAddress(address);
   }
 
+  generateTokenTransferData(transferParams: {
+    toAddress: string;
+    amount: string;
+    details: any;
+  }) {
+    if ('generateTokenTransferData' in this.chain) {
+      return this.chain.generateTokenTransferData(transferParams);
+    }
+    throw new Error('Token transfer not supported at this type of chain');
+  }
+
+  parseTokenTransferData(txData: string) {
+    if ('parseTokenTransferData' in this.chain) {
+      return this.chain.parseTokenTransferData(txData);
+    }
+    throw new Error('Token transfer not supported at this type of chain');
+  }
+
+  getStandard() {
+    return this.chain.getStandard();
+  }
+
   async getFee(
     toAddress: string,
     amountHex: string,
@@ -143,6 +166,16 @@ export class ChainProvider {
     const bnAmount = _hexToBn(amountHex);
 
     return this.chain.simpleSend(this.account, to, bnAmount, fee);
+  }
+
+  async transfer(transferParams: { transactionData: string; fee?: Fee }) {
+    if (!this.account) {
+      throw new Error('Use setHdKey() before sending');
+    }
+    if ('transfer' in this.chain) {
+      return this.chain.transfer({ account: this.account, ...transferParams });
+    }
+    throw new Error('Transfer tokens not supported for this chain');
   }
 
   setHdKey(hdKey: HDKey) {

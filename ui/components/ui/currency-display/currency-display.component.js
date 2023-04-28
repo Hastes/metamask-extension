@@ -18,6 +18,8 @@ export default function CurrencyDisplay({
   denomination,
   currency,
   suffix,
+  provider,
+  native,
 }) {
   const [title, parts] = useCurrencyDisplay(value, {
     displayValue,
@@ -25,8 +27,10 @@ export default function CurrencyDisplay({
     numberOfDecimals,
     hideLabel,
     denomination,
+    provider,
     currency,
     suffix,
+    native,
   });
   return (
     <div
@@ -68,4 +72,6 @@ CurrencyDisplay.propTypes = {
   style: PropTypes.object,
   suffix: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   value: PropTypes.string,
+  provider: PropTypes.object,
+  native: PropTypes.bool,
 };

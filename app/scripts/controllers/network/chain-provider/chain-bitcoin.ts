@@ -64,6 +64,10 @@ export default class ChainBitcoin implements ChainProvider {
     }
   }
 
+  getStandard(): string | null {
+    return 'BIP44';
+  }
+
   async getFee(
     account: ChainAccount,
     toAddress: string,

@@ -98,6 +98,7 @@ export function useGasEstimates({
   const [estimatedMinimumNative] = useCurrencyDisplay(minimumCostInHexWei, {
     numberOfDecimals: primaryNumberOfDecimals,
     currency: primaryCurrency,
+    provider: transaction.txParams.assetDetails.provider,
   });
 
   return {

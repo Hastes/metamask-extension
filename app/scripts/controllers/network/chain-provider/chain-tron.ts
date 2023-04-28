@@ -4,6 +4,7 @@ import { HDKey } from 'ethereum-cryptography/hdkey';
 import { arrToBufArr } from 'ethereumjs-util';
 
 import { generateTRC20TransferData } from '../../../../../ui/pages/send/send.utils';
+import { calcTokenAmount } from '../../../../../shared/lib/transactions-controller-utils';
 import ChainProvider from './interface';
 import { ChainAccount, Fee, ProviderConfig } from '.';
 
@@ -20,6 +21,8 @@ const ENERGY_RATE = 420; // unit price of energy is 420sun
 export default class ChainTron implements ChainProvider {
   client: any;
 
+  provider: ProviderConfig;
+
   contract: string | null = null;
 
   abi: any = null;
@@ -34,21 +37,26 @@ export default class ChainTron implements ChainProvider {
     this.client = new TronWeb({
       fullHost: isTestnet ? TRON_HOST.testnetShasta : TRON_HOST.mainnet,
     });
+    this.provider = provider;
     if (provider.contract) {
       this.contract = provider.contract;
     }
   }
 
+  get decimals(): number {
+    return this.provider.decimals || this.defaultDecimals;
+  }
+
   async initContract() {
-    this.abi = await this.client.contract().at(this.contract);
+    if (!this.abi) {
+      this.abi = await this.client.contract().at(this.contract);
+    }
   }
 
   async getBalance(address: string): Promise<string> {
     if (this.contract) {
       this.client.setAddress(address);
-      if (!this.abi) {
-        await this.initContract();
-      }
+      await this.initContract();
       const balance = await this.abi.balanceOf(address).call();
       return balance.toString();
     }
@@ -67,23 +75,63 @@ export default class ChainTron implements ChainProvider {
     };
   }
 
-  async simpleSend(account: ChainAccount, to: string, amount: BN, fee?: Fee) {
-    if (this.contract) {
-      this.client.setAddress(account.address);
-      this.client.setPrivateKey(account.privateKey);
-      if (!this.abi) {
-        await this.initContract();
-      }
-      return this.abi.transfer(to, amount.toString()).send({
-        feeLimit: parseInt(String(fee?.maxValue), 16),
-      });
-    }
+  async simpleSend(account: ChainAccount, to: string, amount: BN) {
     const signedtxn = await this._buildTransaction(
       account,
       to,
       amount.toString(),
     );
     return this.client.trx.sendRawTransaction(signedtxn);
+  }
+
+  async transfer({
+    account,
+    transactionData,
+    fee,
+  }: {
+    account: ChainAccount;
+    transactionData: string;
+    fee?: Fee;
+  }) {
+    this.client.setAddress(account.address);
+    this.client.setPrivateKey(account.privateKey);
+    await this.initContract();
+
+    const { toAddress, tokenAmountWithoutDecimals } =
+      this.parseTokenTransferData(transactionData);
+    const res = await this.abi
+      .transfer(toAddress, tokenAmountWithoutDecimals.toString())
+      .send({
+        feeLimit: parseInt(String(fee?.maxValue), 16),
+      });
+    return res;
+  }
+
+  generateTokenTransferData(transferParams: any) {
+    return generateTRC20TransferData(transferParams);
+  }
+
+  parseTokenTransferData(transactionData: string) {
+    const transfer = ['address', 'uint256'];
+    const [toAddress, amount] = this.client.utils.abi.decodeParams(
+      transfer,
+      transactionData,
+    );
+
+    return {
+      toAddress,
+      tokenAmountWithoutDecimals: amount,
+      tokenAmount: calcTokenAmount(amount, this.decimals),
+      tokenId: null,
+    };
+  }
+
+  getStandard(): string | null {
+    // TODO: improve it. Can be TRC10
+    if (this.contract) {
+      return 'TRC20';
+    }
+    return null;
   }
 
   isAddress(address: string): boolean {
@@ -107,7 +155,7 @@ export default class ChainTron implements ChainProvider {
 
     const amount = value.toString();
 
-    const transferData = generateTRC20TransferData({
+    const transferData = this.generateTokenTransferData({
       toAddress,
       amount,
     });

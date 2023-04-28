@@ -359,9 +359,10 @@ export const getMetaMaskWalletAccounts = createSelector(
         [],
       )
       .map((account) => ({
+        ...account,
         identity: identities[account.walletAddress],
         wallet: accounts[account.walletAddress],
-        ...account,
+        address: account.account,
       }));
     return result;
   },

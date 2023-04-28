@@ -81,7 +81,9 @@ const AssetListItem = ({
           try {
             await dispatch(
               startNewDraftTransaction({
-                type: AssetType.native,
+                type: tokenProvider.contract
+                  ? AssetType.token
+                  : AssetType.native,
                 details: {
                   provider: tokenProvider,
                   balance: tokenBalance,

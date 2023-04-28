@@ -33,6 +33,7 @@ export default function ConfirmSendToken({
   ethTransactionTotal,
   fiatTransactionTotal,
   hexMaximumTransactionFee,
+  nativeCurrency,
 }) {
   const dispatch = useDispatch();
   const history = useHistory();
@@ -50,7 +51,6 @@ export default function ConfirmSendToken({
     });
   };
   const conversionRate = useSelector(getConversionRate);
-  const nativeCurrency = useSelector(getNativeCurrency);
   const currentCurrency = useSelector(getCurrentCurrency);
   const contractExchangeRate = useSelector(contractExchangeRateSelector);
 
@@ -108,4 +108,5 @@ ConfirmSendToken.propTypes = {
   ethTransactionTotal: PropTypes.string,
   fiatTransactionTotal: PropTypes.string,
   hexMaximumTransactionFee: PropTypes.string,
+  nativeCurrency: PropTypes.string,
 };

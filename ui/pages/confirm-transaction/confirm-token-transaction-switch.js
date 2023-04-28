@@ -42,7 +42,8 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
     tokenAmount,
     tokenId,
     toAddress,
-  } = useAssetDetails(tokenAddress, userAddress, data, provider.chainId);
+    nativeCurrency,
+  } = useAssetDetails(tokenAddress, userAddress, data, provider);
 
   const {
     ethTransactionTotal,
@@ -73,6 +74,7 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
             ethTransactionTotal={ethTransactionTotal}
             fiatTransactionTotal={fiatTransactionTotal}
             hexTransactionTotal={hexTransactionTotal}
+            nativeCurrency={nativeCurrency}
           />
         )}
       />
@@ -97,6 +99,7 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
             ethTransactionTotal={ethTransactionTotal}
             fiatTransactionTotal={fiatTransactionTotal}
             hexTransactionTotal={hexTransactionTotal}
+            nativeCurrency={nativeCurrency}
           />
         )}
       />
@@ -128,6 +131,7 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
             ethTransactionTotal={ethTransactionTotal}
             fiatTransactionTotal={fiatTransactionTotal}
             hexMaximumTransactionFee={hexMaximumTransactionFee}
+            nativeCurrency={nativeCurrency}
           />
         )}
       />
@@ -151,6 +155,7 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
             ethTransactionTotal={ethTransactionTotal}
             fiatTransactionTotal={fiatTransactionTotal}
             hexMaximumTransactionFee={hexMaximumTransactionFee}
+            nativeCurrency={nativeCurrency}
           />
         )}
       />
@@ -171,6 +176,7 @@ export default function ConfirmTokenTransactionSwitch({ transaction }) {
             ethTransactionTotal={ethTransactionTotal}
             fiatTransactionTotal={fiatTransactionTotal}
             hexMaximumTransactionFee={hexMaximumTransactionFee}
+            nativeCurrency={nativeCurrency}
           />
         )}
       />

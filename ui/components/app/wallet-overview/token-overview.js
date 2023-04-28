@@ -38,6 +38,8 @@ import { Icon, ICON_NAMES } from '../../component-library';
 import { IconColor } from '../../../helpers/constants/design-system';
 import WalletOverview from './wallet-overview';
 
+// DEPRECATED: not used in dextrade. May be later be reoved
+
 const TokenOverview = ({ className, token }) => {
   const dispatch = useDispatch();
   const t = useContext(I18nContext);

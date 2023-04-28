@@ -62,6 +62,8 @@ const EthOverview = ({ className }) => {
 
   const { openBuyCryptoInPdapp } = useRamps();
 
+  // DEPRECATED: Not used anymore in dextrade
+
   return (
     <WalletOverview
       loading={!balance}
